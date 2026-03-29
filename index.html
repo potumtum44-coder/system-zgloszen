@@ -18,10 +18,34 @@ th, td { border:1px solid #ddd; padding:6px; font-size:13px; }
 
 img { max-width:60px; cursor:pointer; }
 .hidden { display:none; }
+
+/* 🔒 login */
+#loginBox{
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:#f4f6f8;
+display:flex;
+align-items:center;
+justify-content:center;
+z-index:9999;
+}
 </style>
 </head>
 
 <body>
+
+<!-- 🔒 LOGOWANIE -->
+<div id="loginBox">
+<div style="background:white;padding:30px;border-radius:10px;text-align:center;box-shadow:0 0 20px rgba(0,0,0,0.2);">
+<h2>🔐 Panel Administratora</h2>
+<input type="password" id="haslo" placeholder="Wpisz hasło" style="padding:10px;width:200px;">
+<br><br>
+<button onclick="login()" style="padding:8px 16px;background:#007bff;color:white;border:none;border-radius:6px;">
+Zaloguj
+</button>
+</div>
+</div>
 
 <div class="container">
 
@@ -92,6 +116,16 @@ img { max-width:60px; cursor:pointer; }
 
 <script>
 
+// 🔐 LOGOWANIE
+function login(){
+const pass = document.getElementById("haslo").value;
+if(pass === "admin123"){ // ← zmień hasło!
+document.getElementById("loginBox").style.display="none";
+}else{
+alert("Błędne hasło");
+}
+}
+
 // baza ulic
 const baza = {
 "Góralska": ["5","7","9","11","37","39","41","43","51","53","55","57","59","61","63","65","67","69","71"],
@@ -117,7 +151,7 @@ const baza = {
 "Wyspiańskiego": ["25","38/40"]
 };
 
-// katalog TOP 10
+// katalog
 const katalog = {
 "gazowe": [
 "awaria piecyka","nieszczelność instalacji gazowej","zapach gazu","brak gazu",
@@ -146,7 +180,6 @@ const katalog = {
 let lista = JSON.parse(localStorage.getItem("FINAL_PRO_MAX")) || [];
 let licznik = lista.length + 1;
 
-// INIT
 function init(){
 ulica.innerHTML = Object.keys(baza).map(u=>`<option>${u}</option>`).join("");
 budynkiUpdate();
@@ -208,8 +241,14 @@ reader.onload();
 
 }
 
+// 🔥 NOWA FUNKCJA CZASU (GODZINY + MINUTY)
 function diff(a,b){
-return Math.round((new Date(b)-new Date(a))/60000)+" min";
+let diffMs = new Date(b) - new Date(a);
+
+let godziny = Math.floor(diffMs / (1000 * 60 * 60));
+let minuty = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+return godziny + " h " + minuty + " min";
 }
 
 function render(){
