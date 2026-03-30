@@ -306,6 +306,67 @@ w.print();
 init();
 
 </script>
+<hr>
+<h2>📊 RAPORTY SYSTEMU</h2>
 
+<div id="raporty">
+  <p><b>Wszystkie zgłoszenia:</b> <span id="r_total">0</span></p>
+  <p><b>Nowe:</b> <span id="r_new">0</span></p>
+  <p><b>W trakcie:</b> <span id="r_progress">0</span></p>
+  <p><b>Zakończone:</b> <span id="r_done">0</span></p>
+
+  <p><b>Średni czas reakcji:</b> <span id="r_reaction">0</span> h</p>
+  <p><b>Średni czas realizacji:</b> <span id="r_realization">0</span> h</p>
+
+  <h3>🔥 Najczęstsze problemy</h3>
+  <ul id="r_issues"></ul>
+
+  <h3>🏢 Budynki</h3>
+  <ul id="r_buildings"></ul>
+</div>
+
+<script>
+function generujRaporty() {
+  if (!window.zgloszenia) return;
+
+  const t = window.zgloszenia;
+
+  document.getElementById("r_total").innerText = t.length;
+  document.getElementById("r_new").innerText = t.filter(x => x.status === "Nowe").length;
+  document.getElementById("r_progress").innerText = t.filter(x => x.status === "W trakcie").length;
+  document.getElementById("r_done").innerText = t.filter(x => x.status === "Zakończone").length;
+
+  const reakcje = t.map(x => x.reakcja).filter(x => x);
+  const realizacje = t.map(x => x.realizacja).filter(x => x);
+
+  const avg = arr => arr.length ? (arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1) : 0;
+
+  document.getElementById("r_reaction").innerText = avg(reakcje);
+  document.getElementById("r_realization").innerText = avg(realizacje);
+
+  // TOP problemy
+  const issues = {};
+  t.forEach(x => issues[x.typ] = (issues[x.typ] || 0) + 1);
+
+  const issuesList = document.getElementById("r_issues");
+  issuesList.innerHTML = "";
+  Object.entries(issues).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{
+    issuesList.innerHTML += `<li>${k} - ${v}</li>`;
+  });
+
+  // budynki
+  const buildings = {};
+  t.forEach(x => buildings[x.adres] = (buildings[x.adres] || 0) + 1);
+
+  const bList = document.getElementById("r_buildings");
+  bList.innerHTML = "";
+  Object.entries(buildings).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{
+    bList.innerHTML += `<li>${k} - ${v}</li>`;
+  });
+}
+
+// uruchom po załadowaniu
+setTimeout(generujRaporty, 1000);
+</script>
 </body>
 </html>
