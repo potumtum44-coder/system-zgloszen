@@ -6,61 +6,18 @@
 
 <style>
 body { font-family: Arial; background:#f4f6f8; padding:20px; }
-
-.container {
-  background:#fff;
-  padding:25px;
-  border-radius:12px;
-  max-width:1200px;
-  margin:auto;
-}
-
-.form-grid {
-  display:grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap:10px;
-}
-
-input, select {
-  padding:8px;
-  border:1px solid #ccc;
-  border-radius:6px;
-}
-
-button {
-  padding:10px;
-  background:#007bff;
-  color:white;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-}
-
-table {
-  width:100%;
-  border-collapse: collapse;
-  margin-top:20px;
-}
-
-th, td {
-  border:1px solid #ddd;
-  padding:8px;
-  text-align:center;
-}
-
+.container { background:#fff; padding:25px; border-radius:12px; max-width:1200px; margin:auto; }
+.form-grid { display:grid; grid-template-columns: repeat(2, 1fr); gap:10px; }
+input, select { padding:8px; border:1px solid #ccc; border-radius:6px; }
+button { padding:10px; background:#007bff; color:white; border:none; border-radius:6px; cursor:pointer; }
+table { width:100%; border-collapse: collapse; margin-top:20px; }
+th, td { border:1px solid #ddd; padding:8px; text-align:center; }
 th { background:#eee; }
-
-#raporty {
-  margin-top:30px;
-  background:#fafafa;
-  padding:15px;
-  border-radius:10px;
-}
+#raporty { margin-top:30px; background:#fafafa; padding:15px; border-radius:10px; }
 </style>
 </head>
 
 <body>
-
 <div class="container">
 
 <h1>📊 SYSTEM ADMINISTRATORA FINAL PRO MAX+</h1>
@@ -69,33 +26,22 @@ th { background:#eee; }
 
 <div class="form-grid">
 
-<select id="ulica">
+<select id="ulica" onchange="ladujBudynki()">
 <option value="">-- wybierz ulicę --</option>
-<option>Góralska</option>
-<option>Leśna Góra</option>
-<option>Mazowiecka</option>
-<option>Trawki</option>
 </select>
 
-<input id="budynek" placeholder="Budynek">
+<select id="budynek">
+<option value="">-- wybierz budynek --</option>
+</select>
 
 <input id="lokal" placeholder="Lokal">
 
-<select id="dzial">
+<select id="dzial" onchange="ladujTypy()">
 <option value="">-- dział --</option>
-<option>elektryczne</option>
-<option>wodne</option>
-<option>gazowe</option>
-<option>porządkowe</option>
 </select>
 
 <select id="typ">
 <option value="">-- typ zgłoszenia --</option>
-<option>zwarcie instalacji</option>
-<option>wyciek wody</option>
-<option>awaria piecyka</option>
-<option>brak prądu</option>
-<option>inne</option>
 </select>
 
 <input id="wykonawca" placeholder="Wykonawca">
@@ -117,19 +63,13 @@ th { background:#eee; }
 
 <div id="raporty">
 <h2>📊 RAPORTY</h2>
-
 <p>Wszystkie: <span id="r_total">0</span></p>
 <p>Nowe: <span id="r_new">0</span></p>
 <p>W trakcie: <span id="r_prog">0</span></p>
 <p>Zakończone: <span id="r_done">0</span></p>
-
 <p>Śr. reakcja: <span id="r_react">0</span> h</p>
 <p>Śr. realizacja: <span id="r_real">0</span> h</p>
-
-<h3>🔥 Najczęstsze</h3>
 <ul id="r_issues"></ul>
-
-<h3>🏢 Budynki</h3>
 <ul id="r_buildings"></ul>
 </div>
 
@@ -137,6 +77,66 @@ th { background:#eee; }
 
 <script>
 
+// 🔥 DANE
+const dane = {
+  "Góralska": ["5","7","9","11"],
+  "Leśna Góra": ["5","8","23","25","27","29"],
+  "Mazowiecka": ["3","5","7"],
+  "Trawki": ["9","11","13","15","17"]
+};
+
+const typy = {
+  "elektryczne": ["zwarcie instalacji","brak prądu"],
+  "wodne": ["wyciek wody","awaria pionu"],
+  "gazowe": ["awaria piecyka"],
+  "porządkowe": ["śmieci","sprzątanie"]
+};
+
+// 🔥 INICJALIZACJA
+window.onload = function(){
+
+  // ulice
+  const u = document.getElementById("ulica");
+  Object.keys(dane).forEach(x=>{
+    u.innerHTML += `<option>${x}</option>`;
+  });
+
+  // działy
+  const d = document.getElementById("dzial");
+  Object.keys(typy).forEach(x=>{
+    d.innerHTML += `<option>${x}</option>`;
+  });
+
+  render();
+};
+
+// 🔥 budynki
+function ladujBudynki(){
+  const u = document.getElementById("ulica").value;
+  const b = document.getElementById("budynek");
+  b.innerHTML = `<option value="">-- wybierz budynek --</option>`;
+
+  if(!dane[u]) return;
+
+  dane[u].forEach(x=>{
+    b.innerHTML += `<option>${x}</option>`;
+  });
+}
+
+// 🔥 typy
+function ladujTypy(){
+  const d = document.getElementById("dzial").value;
+  const t = document.getElementById("typ");
+  t.innerHTML = `<option value="">-- typ zgłoszenia --</option>`;
+
+  if(!typy[d]) return;
+
+  typy[d].forEach(x=>{
+    t.innerHTML += `<option>${x}</option>`;
+  });
+}
+
+// 🔥 SYSTEM
 let lista = JSON.parse(localStorage.getItem("zgloszenia")) || [];
 let id = lista.length + 1;
 
@@ -147,35 +147,32 @@ function zapisz(){
 function czas(ms){
   let h = Math.floor(ms/3600000);
   let m = Math.floor((ms%3600000)/60000);
-  return h + " h " + m + " min";
+  return h+" h "+m+" min";
 }
 
 function dodaj(){
 
   let ulica = document.getElementById("ulica").value;
-  let budynek = document.getElementById("budynek").value;
-  let lokal = document.getElementById("lokal").value;
+  let bud = document.getElementById("budynek").value;
+  let lok = document.getElementById("lokal").value;
   let dzial = document.getElementById("dzial").value;
   let typ = document.getElementById("typ").value;
-  let wykonawca = document.getElementById("wykonawca").value;
 
-  if(!ulica || !budynek || !dzial || !typ){
-    alert("Uzupełnij wymagane pola!");
+  if(!ulica || !bud || !dzial || !typ){
+    alert("Uzupełnij pola!");
     return;
   }
 
-  let teraz = new Date();
-
   lista.push({
-    id: "ZL-" + id++,
-    adres: ulica + " " + budynek + "/" + lokal,
-    dzial: dzial,
-    typ: typ,
-    wykonawca: wykonawca || "-",
-    status: "Nowe",
-    data: teraz,
-    reakcja: null,
-    realizacja: null
+    id:"ZL-"+id++,
+    adres: ulica+" "+bud+"/"+lok,
+    dzial:dzial,
+    typ:typ,
+    wykonawca: document.getElementById("wykonawca").value || "-",
+    status:"Nowe",
+    data:new Date(),
+    reakcja:null,
+    realizacja:null
   });
 
   zapisz();
@@ -185,13 +182,12 @@ function dodaj(){
 function akcja(i){
   let t = lista[i];
 
-  if(t.status === "Nowe"){
-    t.status = "W trakcie";
+  if(t.status==="Nowe"){
+    t.status="W trakcie";
     t.reakcja = new Date() - new Date(t.data);
-  }
-  else if(t.status === "W trakcie"){
-    t.status = "Zakończone";
-    t.realizacja = new Date() - (new Date(t.data).getTime() + t.reakcja);
+  }else{
+    t.status="Zakończone";
+    t.realizacja = new Date() - (new Date(t.data).getTime()+t.reakcja);
   }
 
   zapisz();
@@ -200,22 +196,22 @@ function akcja(i){
 
 function render(){
 
-  let tbody = document.getElementById("tbody");
-  tbody.innerHTML = "";
+  let tb = document.getElementById("tbody");
+  tb.innerHTML="";
 
   lista.forEach((t,i)=>{
-    tbody.innerHTML += `
+    tb.innerHTML += `
     <tr>
-      <td>${t.id}</td>
-      <td>${t.adres}</td>
-      <td>${t.dzial}</td>
-      <td>${t.typ}</td>
-      <td>${t.wykonawca}</td>
-      <td>${t.status}</td>
-      <td>${new Date(t.data).toLocaleString()}</td>
-      <td>${t.reakcja ? czas(t.reakcja) : "-"}</td>
-      <td>${t.realizacja ? czas(t.realizacja) : "-"}</td>
-      <td><button onclick="akcja(${i})">▶</button></td>
+    <td>${t.id}</td>
+    <td>${t.adres}</td>
+    <td>${t.dzial}</td>
+    <td>${t.typ}</td>
+    <td>${t.wykonawca}</td>
+    <td>${t.status}</td>
+    <td>${new Date(t.data).toLocaleString()}</td>
+    <td>${t.reakcja?czas(t.reakcja):"-"}</td>
+    <td>${t.realizacja?czas(t.realizacja):"-"}</td>
+    <td><button onclick="akcja(${i})">▶</button></td>
     </tr>`;
   });
 
@@ -224,30 +220,17 @@ function render(){
 
 function raporty(){
 
-  let total = lista.length;
-  let nowe = lista.filter(x=>x.status==="Nowe").length;
-  let prog = lista.filter(x=>x.status==="W trakcie").length;
-  let done = lista.filter(x=>x.status==="Zakończone").length;
-
-  let reakcje = lista.map(x=>x.reakcja).filter(x=>x);
-  let realizacje = lista.map(x=>x.realizacja).filter(x=>x);
-
-  let avg = arr => arr.length ? (arr.reduce((a,b)=>a+b,0)/arr.length/3600000).toFixed(1) : 0;
-
-  document.getElementById("r_total").innerText = total;
-  document.getElementById("r_new").innerText = nowe;
-  document.getElementById("r_prog").innerText = prog;
-  document.getElementById("r_done").innerText = done;
-
-  document.getElementById("r_react").innerText = avg(reakcje);
-  document.getElementById("r_real").innerText = avg(realizacje);
+  document.getElementById("r_total").innerText = lista.length;
+  document.getElementById("r_new").innerText = lista.filter(x=>x.status==="Nowe").length;
+  document.getElementById("r_prog").innerText = lista.filter(x=>x.status==="W trakcie").length;
+  document.getElementById("r_done").innerText = lista.filter(x=>x.status==="Zakończone").length;
 
   let issues = {};
   lista.forEach(x=>issues[x.typ]=(issues[x.typ]||0)+1);
 
   let ul = document.getElementById("r_issues");
   ul.innerHTML="";
-  Object.entries(issues).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{
+  Object.entries(issues).forEach(([k,v])=>{
     ul.innerHTML+=`<li>${k} - ${v}</li>`;
   });
 
@@ -256,15 +239,12 @@ function raporty(){
 
   let ul2 = document.getElementById("r_buildings");
   ul2.innerHTML="";
-  Object.entries(bud).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{
+  Object.entries(bud).forEach(([k,v])=>{
     ul2.innerHTML+=`<li>${k} - ${v}</li>`;
   });
 }
 
-render();
-  
-<script>
-alert("JS działa");
 </script>
+
 </body>
 </html>
