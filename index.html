@@ -5,11 +5,7 @@
 <title>SYSTEM ADMINISTRATORA FINAL PRO MAX+</title>
 
 <style>
-body {
-  font-family: Arial;
-  background:#f4f6f8;
-  padding:20px;
-}
+body { font-family: Arial; background:#f4f6f8; padding:20px; }
 
 .container {
   background:#fff;
@@ -17,7 +13,6 @@ body {
   border-radius:12px;
   max-width:1200px;
   margin:auto;
-  box-shadow:0 0 10px rgba(0,0,0,0.1);
 }
 
 .form-grid {
@@ -33,7 +28,6 @@ input, select {
 }
 
 button {
-  margin-top:10px;
   padding:10px;
   background:#007bff;
   color:white;
@@ -58,8 +52,8 @@ th { background:#eee; }
 
 #raporty {
   margin-top:30px;
-  padding:15px;
   background:#fafafa;
+  padding:15px;
   border-radius:10px;
 }
 </style>
@@ -74,20 +68,38 @@ th { background:#eee; }
 <h2>➕ Nowe zgłoszenie</h2>
 
 <div class="form-grid">
-<input id="ulica" placeholder="Ulica">
+
+<select id="ulica">
+<option value="">-- wybierz ulicę --</option>
+<option>Góralska</option>
+<option>Leśna Góra</option>
+<option>Mazowiecka</option>
+<option>Trawki</option>
+</select>
+
 <input id="budynek" placeholder="Budynek">
+
 <input id="lokal" placeholder="Lokal">
 
 <select id="dzial">
-<option value="">-- wybierz dział --</option>
+<option value="">-- dział --</option>
 <option>elektryczne</option>
 <option>wodne</option>
 <option>gazowe</option>
 <option>porządkowe</option>
 </select>
 
-<input id="typ" placeholder="Typ zgłoszenia">
+<select id="typ">
+<option value="">-- typ zgłoszenia --</option>
+<option>zwarcie instalacji</option>
+<option>wyciek wody</option>
+<option>awaria piecyka</option>
+<option>brak prądu</option>
+<option>inne</option>
+</select>
+
 <input id="wykonawca" placeholder="Wykonawca">
+
 </div>
 
 <button onclick="dodaj()">Dodaj zgłoszenie</button>
@@ -140,34 +152,37 @@ function czas(ms){
 
 function dodaj(){
 
-  if(!document.getElementById("dzial").value){
-    alert("Wybierz dział!");
+  let ulica = document.getElementById("ulica").value;
+  let budynek = document.getElementById("budynek").value;
+  let lokal = document.getElementById("lokal").value;
+  let dzial = document.getElementById("dzial").value;
+  let typ = document.getElementById("typ").value;
+  let wykonawca = document.getElementById("wykonawca").value;
+
+  if(!ulica || !budynek || !dzial || !typ){
+    alert("Uzupełnij wymagane pola!");
     return;
   }
 
   let teraz = new Date();
 
-  let obj = {
+  lista.push({
     id: "ZL-" + id++,
-    adres: document.getElementById("ulica").value + " " +
-           document.getElementById("budynek").value + "/" +
-           document.getElementById("lokal").value,
-    dzial: document.getElementById("dzial").value,
-    typ: document.getElementById("typ").value,
-    wykonawca: document.getElementById("wykonawca").value,
+    adres: ulica + " " + budynek + "/" + lokal,
+    dzial: dzial,
+    typ: typ,
+    wykonawca: wykonawca || "-",
     status: "Nowe",
     data: teraz,
     reakcja: null,
     realizacja: null
-  };
+  });
 
-  lista.push(obj);
   zapisz();
   render();
 }
 
 function akcja(i){
-
   let t = lista[i];
 
   if(t.status === "Nowe"){
@@ -189,7 +204,6 @@ function render(){
   tbody.innerHTML = "";
 
   lista.forEach((t,i)=>{
-
     tbody.innerHTML += `
     <tr>
       <td>${t.id}</td>
