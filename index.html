@@ -5,15 +5,36 @@
 <title>SYSTEM ADMINISTRATORA FINAL PRO MAX+</title>
 
 <style>
-body { font-family: Arial; background:#f4f6f8; padding:20px; }
-h1 { color:#333; }
+body {
+  font-family: Arial;
+  background:#f4f6f8;
+  padding:20px;
+}
 
-.container { background:#fff; padding:20px; border-radius:10px; }
+.container {
+  background:#fff;
+  padding:25px;
+  border-radius:12px;
+  max-width:1200px;
+  margin:auto;
+  box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
 
-input, select { padding:6px; margin:5px 0; width:100%; }
+.form-grid {
+  display:grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap:10px;
+}
+
+input, select {
+  padding:8px;
+  border:1px solid #ccc;
+  border-radius:6px;
+}
 
 button {
-  padding:8px 12px;
+  margin-top:10px;
+  padding:10px;
   background:#007bff;
   color:white;
   border:none;
@@ -29,11 +50,18 @@ table {
 
 th, td {
   border:1px solid #ddd;
-  padding:6px;
-  font-size:13px;
+  padding:8px;
+  text-align:center;
 }
 
 th { background:#eee; }
+
+#raporty {
+  margin-top:30px;
+  padding:15px;
+  background:#fafafa;
+  border-radius:10px;
+}
 </style>
 </head>
 
@@ -45,11 +73,13 @@ th { background:#eee; }
 
 <h2>➕ Nowe zgłoszenie</h2>
 
+<div class="form-grid">
 <input id="ulica" placeholder="Ulica">
 <input id="budynek" placeholder="Budynek">
 <input id="lokal" placeholder="Lokal">
 
 <select id="dzial">
+<option value="">-- wybierz dział --</option>
 <option>elektryczne</option>
 <option>wodne</option>
 <option>gazowe</option>
@@ -58,23 +88,22 @@ th { background:#eee; }
 
 <input id="typ" placeholder="Typ zgłoszenia">
 <input id="wykonawca" placeholder="Wykonawca">
+</div>
 
 <button onclick="dodaj()">Dodaj zgłoszenie</button>
 
-<table id="tabela">
+<table>
 <thead>
 <tr>
 <th>ID</th><th>Adres</th><th>Dział</th><th>Typ</th>
 <th>Wykonawca</th><th>Status</th>
-<th>Data zgł.</th><th>Reakcja</th><th>Realizacja</th>
-<th>Akcja</th>
+<th>Data</th><th>Reakcja</th><th>Realizacja</th><th>Akcja</th>
 </tr>
 </thead>
-<tbody></tbody>
+<tbody id="tbody"></tbody>
 </table>
 
-<hr>
-
+<div id="raporty">
 <h2>📊 RAPORTY</h2>
 
 <p>Wszystkie: <span id="r_total">0</span></p>
@@ -90,12 +119,18 @@ th { background:#eee; }
 
 <h3>🏢 Budynki</h3>
 <ul id="r_buildings"></ul>
+</div>
 
 </div>
 
 <script>
-let lista = [];
-let id = 1;
+
+let lista = JSON.parse(localStorage.getItem("zgloszenia")) || [];
+let id = lista.length + 1;
+
+function zapisz(){
+  localStorage.setItem("zgloszenia", JSON.stringify(lista));
+}
 
 function czas(ms){
   let h = Math.floor(ms/3600000);
@@ -104,6 +139,12 @@ function czas(ms){
 }
 
 function dodaj(){
+
+  if(!document.getElementById("dzial").value){
+    alert("Wybierz dział!");
+    return;
+  }
+
   let teraz = new Date();
 
   let obj = {
@@ -121,29 +162,34 @@ function dodaj(){
   };
 
   lista.push(obj);
+  zapisz();
   render();
 }
 
 function akcja(i){
+
   let t = lista[i];
 
   if(t.status === "Nowe"){
     t.status = "W trakcie";
-    t.reakcja = new Date() - t.data;
+    t.reakcja = new Date() - new Date(t.data);
   }
   else if(t.status === "W trakcie"){
     t.status = "Zakończone";
-    t.realizacja = new Date() - (t.data + t.reakcja);
+    t.realizacja = new Date() - (new Date(t.data).getTime() + t.reakcja);
   }
 
+  zapisz();
   render();
 }
 
 function render(){
-  let tbody = document.querySelector("#tabela tbody");
+
+  let tbody = document.getElementById("tbody");
   tbody.innerHTML = "";
 
   lista.forEach((t,i)=>{
+
     tbody.innerHTML += `
     <tr>
       <td>${t.id}</td>
@@ -152,7 +198,7 @@ function render(){
       <td>${t.typ}</td>
       <td>${t.wykonawca}</td>
       <td>${t.status}</td>
-      <td>${t.data.toLocaleString()}</td>
+      <td>${new Date(t.data).toLocaleString()}</td>
       <td>${t.reakcja ? czas(t.reakcja) : "-"}</td>
       <td>${t.realizacja ? czas(t.realizacja) : "-"}</td>
       <td><button onclick="akcja(${i})">▶</button></td>
@@ -182,7 +228,6 @@ function raporty(){
   document.getElementById("r_react").innerText = avg(reakcje);
   document.getElementById("r_real").innerText = avg(realizacje);
 
-  // TOP
   let issues = {};
   lista.forEach(x=>issues[x.typ]=(issues[x.typ]||0)+1);
 
@@ -201,6 +246,9 @@ function raporty(){
     ul2.innerHTML+=`<li>${k} - ${v}</li>`;
   });
 }
+
+render();
+
 </script>
 
 </body>
