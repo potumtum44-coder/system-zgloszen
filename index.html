@@ -366,7 +366,90 @@ function generujRaporty() {
 }
 
 // uruchom po załadowaniu
-setTimeout(generujRaporty, 1000);
+<script>
+function generujRaporty() {
+
+  const rows = document.querySelectorAll("table tr");
+  if (rows.length <= 1) return;
+
+  let total = 0;
+  let nowe = 0;
+  let wtrakcie = 0;
+  let zakonczone = 0;
+
+  let reakcje = [];
+  let realizacje = [];
+
+  let issues = {};
+  let buildings = {};
+
+  rows.forEach((row, index) => {
+    if (index === 0) return; // pomiń nagłówek
+
+    const cells = row.querySelectorAll("td");
+    if (cells.length < 12) return;
+
+    total++;
+
+    const adres = cells[1].innerText.trim();
+    const dzial = cells[2].innerText.trim();
+    const typ = cells[3].innerText.trim();
+    const status = cells[6].innerText.trim();
+    const reakcja = cells[10].innerText.trim();
+    const realizacja = cells[11].innerText.trim();
+
+    // STATUSY
+    if (status.includes("Nowe")) nowe++;
+    else if (status.includes("W trakcie")) wtrakcie++;
+    else if (status.includes("Zrealizowane") || status.includes("Zakończone")) zakonczone++;
+
+    // CZASY
+    const parseTime = (txt) => {
+      const match = txt.match(/(\d+)\s*h\s*(\d+)\s*min/);
+      if (!match) return null;
+      return parseInt(match[1]) + parseInt(match[2]) / 60;
+    };
+
+    const r = parseTime(reakcja);
+    if (r) reakcje.push(r);
+
+    const z = parseTime(realizacja);
+    if (z) realizacje.push(z);
+
+    // PROBLEMY
+    issues[typ] = (issues[typ] || 0) + 1;
+
+    // BUDYNKI
+    buildings[adres] = (buildings[adres] || 0) + 1;
+  });
+
+  const avg = arr => arr.length ? (arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1) : 0;
+
+  document.getElementById("r_total").innerText = total;
+  document.getElementById("r_new").innerText = nowe;
+  document.getElementById("r_progress").innerText = wtrakcie;
+  document.getElementById("r_done").innerText = zakonczone;
+
+  document.getElementById("r_reaction").innerText = avg(reakcje);
+  document.getElementById("r_realization").innerText = avg(realizacje);
+
+  // TOP PROBLEMY
+  const issuesList = document.getElementById("r_issues");
+  issuesList.innerHTML = "";
+  Object.entries(issues).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{
+    issuesList.innerHTML += `<li>${k} - ${v}</li>`;
+  });
+
+  // BUDYNKI
+  const bList = document.getElementById("r_buildings");
+  bList.innerHTML = "";
+  Object.entries(buildings).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{
+    bList.innerHTML += `<li>${k} - ${v}</li>`;
+  });
+}
+
+// uruchom
+setTimeout(generujRaporty, 500);
 </script>
 </body>
 </html>
