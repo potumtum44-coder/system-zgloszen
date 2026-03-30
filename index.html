@@ -2,247 +2,308 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>SYSTEM ADMINISTRATORA FINAL PRO MAX+</title>
+<title>System Administratora FINAL PRO MAX+</title>
 
 <style>
 body { font-family: Arial; background:#f4f6f8; padding:20px; }
-.container { background:#fff; padding:25px; border-radius:12px; max-width:1200px; margin:auto; }
-.form-grid { display:grid; grid-template-columns: repeat(2, 1fr); gap:10px; }
-input, select { padding:8px; border:1px solid #ccc; border-radius:6px; }
-button { padding:10px; background:#007bff; color:white; border:none; border-radius:6px; cursor:pointer; }
+.container { background:white; padding:20px; border-radius:10px; }
+
+input, select, textarea { width:100%; padding:8px; margin-bottom:10px; }
+
+button { padding:6px 10px; border:none; border-radius:6px; cursor:pointer; }
+.btn { background:#007bff; color:white; }
+
 table { width:100%; border-collapse: collapse; margin-top:20px; }
-th, td { border:1px solid #ddd; padding:8px; text-align:center; }
-th { background:#eee; }
-#raporty { margin-top:30px; background:#fafafa; padding:15px; border-radius:10px; }
+th, td { border:1px solid #ddd; padding:6px; font-size:13px; }
+
+img { max-width:60px; cursor:pointer; }
+.hidden { display:none; }
+
+#loginBox{
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:#f4f6f8;
+display:flex;
+align-items:center;
+justify-content:center;
+z-index:9999;
+}
 </style>
 </head>
 
 <body>
+
+<!-- 🔒 LOGOWANIE -->
+<div id="loginBox">
+<div style="background:white;padding:30px;border-radius:10px;text-align:center;box-shadow:0 0 20px rgba(0,0,0,0.2);">
+<h2>🔐 Panel Administratora</h2>
+<input type="password" id="haslo" placeholder="Wpisz hasło" style="padding:10px;width:200px;">
+<br><br>
+<button onclick="login()" style="padding:8px 16px;background:#007bff;color:white;border:none;border-radius:6px;">
+Zaloguj
+</button>
+</div>
+</div>
+
 <div class="container">
 
 <h1>📊 SYSTEM ADMINISTRATORA FINAL PRO MAX+</h1>
 
-<h2>➕ Nowe zgłoszenie</h2>
+<h3>➕ Nowe zgłoszenie</h3>
 
-<div class="form-grid">
+<label>Ulica</label>
+<select id="ulica" onchange="budynkiUpdate()"></select>
 
-<select id="ulica" onchange="ladujBudynki()">
-<option value="">-- wybierz ulicę --</option>
+<label>Budynek</label>
+<select id="budynek"></select>
+
+<label>Lokal</label>
+<input id="lokal">
+
+<label>Dział</label>
+<select id="dzial" onchange="typyUpdate()"></select>
+
+<label>Typ zgłoszenia</label>
+<select id="typ"></select>
+
+<!-- 🔥 PRZENIESIONE -->
+<label>Opis / kontakt</label>
+<textarea id="opis"></textarea>
+
+<label>Wykonawca</label>
+<select id="wykonawca" onchange="toggleInne()">
+<option>Konserwator 1</option>
+<option>Konserwator 2</option>
+<option>Konserwator 3</option>
+<option>Inne</option>
 </select>
 
-<select id="budynek">
-<option value="">-- wybierz budynek --</option>
-</select>
+<input id="wykonawca_inne" class="hidden" placeholder="Wpisz wykonawcę">
 
-<input id="lokal" placeholder="Lokal">
+<label>Data zgłoszenia (możesz zmienić)</label>
+<input type="datetime-local" id="data_zgl">
 
-<select id="dzial" onchange="ladujTypy()">
-<option value="">-- dział --</option>
-</select>
+<label>Zdjęcie</label>
+<input type="file" id="foto">
 
-<select id="typ">
-<option value="">-- typ zgłoszenia --</option>
-</select>
-
-<input id="wykonawca" placeholder="Wykonawca">
-
-</div>
-
-<button onclick="dodaj()">Dodaj zgłoszenie</button>
+<button class="btn" onclick="dodaj()">Dodaj</button>
 
 <table>
 <thead>
 <tr>
-<th>ID</th><th>Adres</th><th>Dział</th><th>Typ</th>
-<th>Wykonawca</th><th>Status</th>
-<th>Data</th><th>Reakcja</th><th>Realizacja</th><th>Akcja</th>
+<th>ID</th>
+<th>Adres</th>
+<th>Dział</th>
+<th>Typ</th>
+<th>Zdjęcie</th>
+<th>Wykonawca</th>
+<th>Status</th>
+<th>Data zgł.</th>
+<th>Przekazanie wykonawcy</th>
+<th>Zakończenie</th>
+<th>Reakcja</th>
+<th>Realizacja</th>
+<th>Akcja</th>
 </tr>
 </thead>
-<tbody id="tbody"></tbody>
-</table>
 
-<div id="raporty">
-<h2>📊 RAPORTY</h2>
-<p>Wszystkie: <span id="r_total">0</span></p>
-<p>Nowe: <span id="r_new">0</span></p>
-<p>W trakcie: <span id="r_prog">0</span></p>
-<p>Zakończone: <span id="r_done">0</span></p>
-<p>Śr. reakcja: <span id="r_react">0</span> h</p>
-<p>Śr. realizacja: <span id="r_real">0</span> h</p>
-<ul id="r_issues"></ul>
-<ul id="r_buildings"></ul>
-</div>
+<tbody id="tabela"></tbody>
+
+</table>
 
 </div>
 
 <script>
 
-// 🔥 DANE
-const dane = {
-  "Góralska": ["5","7","9","11"],
-  "Leśna Góra": ["5","8","23","25","27","29"],
-  "Mazowiecka": ["3","5","7"],
-  "Trawki": ["9","11","13","15","17"]
-};
-
-const typy = {
-  "elektryczne": ["zwarcie instalacji","brak prądu"],
-  "wodne": ["wyciek wody","awaria pionu"],
-  "gazowe": ["awaria piecyka"],
-  "porządkowe": ["śmieci","sprzątanie"]
-};
-
-// 🔥 INICJALIZACJA
-window.onload = function(){
-
-  // ulice
-  const u = document.getElementById("ulica");
-  Object.keys(dane).forEach(x=>{
-    u.innerHTML += `<option>${x}</option>`;
-  });
-
-  // działy
-  const d = document.getElementById("dzial");
-  Object.keys(typy).forEach(x=>{
-    d.innerHTML += `<option>${x}</option>`;
-  });
-
-  render();
-};
-
-// 🔥 budynki
-function ladujBudynki(){
-  const u = document.getElementById("ulica").value;
-  const b = document.getElementById("budynek");
-  b.innerHTML = `<option value="">-- wybierz budynek --</option>`;
-
-  if(!dane[u]) return;
-
-  dane[u].forEach(x=>{
-    b.innerHTML += `<option>${x}</option>`;
-  });
+// 🔐 LOGOWANIE
+function login(){
+const pass = document.getElementById("haslo").value;
+if(pass === "admin123"){
+document.getElementById("loginBox").style.display="none";
+}else{
+alert("Błędne hasło");
+}
 }
 
-// 🔥 typy
-function ladujTypy(){
-  const d = document.getElementById("dzial").value;
-  const t = document.getElementById("typ");
-  t.innerHTML = `<option value="">-- typ zgłoszenia --</option>`;
+// baza ulic
+const baza = {
+"Góralska": ["5","7","9","11","37","39","41","43","51","53","55","57","59","61","63","65","67","69","71"],
+"Leśna Góra": ["5","8","23","25","27","29"],
+"Mazowiecka": ["3","5","7"],
+"Trawki": ["9","11","13","15","17"],
+"Reymonta": ["17","34"],
+"Słowackiego": ["36A","40A","47/49/51","59","61"],
+"Róży Ostrowskiej": ["2","4"],
+"Leśny Stok": ["4"],
+"Partyzantów": ["91/93","95/97","99","101","103","105","107","109","27"],
+"Wojska Polskiego": ["7"],
+"Batorego": ["33","34","35","37","39"],
+"De Gaulle’a": ["8"],
+"Zamenhofa": ["18"],
+"Grunwaldzka": ["92/98","116","121"],
+"Biała": ["3","6"],
+"Chrobrego": ["10","12","14","18/20"],
+"Danusi": ["4A"],
+"Lelewela": ["17","17A","21/22"],
+"Lilli Wenedy": ["18A","B","D","E","F"],
+"Mickiewicza": ["1/3","18"],
+"Wyspiańskiego": ["25","38/40"]
+};
 
-  if(!typy[d]) return;
+// katalog
+const katalog = {
+"gazowe": ["awaria piecyka","nieszczelność instalacji gazowej","zapach gazu","brak gazu","przegląd instalacji gazowej","nieszczelny zawór gazowy","problem z wentylacją","brak ciągu kominowego","czujnik gazu – alarm","inne - patrz opis"],
+"elektryczne": ["brak prądu w lokalu","brak prądu w budynku","zwarcie instalacji","awaria oświetlenia klatki","uszkodzone gniazdko","awaria licznika energii","problem z instalacją elektryczną","awaria domofonu","bezpieczniki / rozdzielnia","inne - patrz opis"],
+"wodne": ["wyciek wody","zalanie lokalu","awaria pionu wodnego","problem z kanalizacją","zatkany odpływ","niskie ciśnienie wody","awaria licznika wody","nieszczelny zawór","cofka kanalizacji","inne - patrz opis"],
+"porządkowe": ["sprzątanie klatki schodowej","zalegające śmieci","odpady wielkogabarytowe","brak porządku wokół budynku","liście / zanieczyszczenia","śnieg / oblodzenie","piasek po zimie","zanieczyszczone miejsca wspólne","dezynfekcja powierzchni","inne - patrz opis"],
+"inne": ["inne - patrz opis"]
+};
 
-  typy[d].forEach(x=>{
-    t.innerHTML += `<option>${x}</option>`;
-  });
+let lista = JSON.parse(localStorage.getItem("FINAL_PRO_MAX")) || [];
+let licznik = lista.length + 1;
+
+function init(){
+ulica.innerHTML = Object.keys(baza).map(u=>`<option>${u}</option>`).join("");
+budynkiUpdate();
+dzial.innerHTML = Object.keys(katalog).map(d=>`<option>${d}</option>`).join("");
+typyUpdate();
+render();
 }
 
-// 🔥 SYSTEM
-let lista = JSON.parse(localStorage.getItem("zgloszenia")) || [];
-let id = lista.length + 1;
-
-function zapisz(){
-  localStorage.setItem("zgloszenia", JSON.stringify(lista));
+function budynkiUpdate(){
+budynek.innerHTML = baza[ulica.value].map(b=>`<option>${b}</option>`).join("");
 }
 
-function czas(ms){
-  let h = Math.floor(ms/3600000);
-  let m = Math.floor((ms%3600000)/60000);
-  return h+" h "+m+" min";
+function typyUpdate(){
+typ.innerHTML = katalog[dzial.value].map(t=>`<option>${t}</option>`).join("");
+}
+
+function toggleInne(){
+wykonawca_inne.classList.toggle("hidden", wykonawca.value !== "Inne");
+}
+
+function save(){
+localStorage.setItem("FINAL_PRO_MAX", JSON.stringify(lista));
 }
 
 function dodaj(){
 
-  let ulica = document.getElementById("ulica").value;
-  let bud = document.getElementById("budynek").value;
-  let lok = document.getElementById("lokal").value;
-  let dzial = document.getElementById("dzial").value;
-  let typ = document.getElementById("typ").value;
+let wykon = wykonawca.value === "Inne" ? wykonawca_inne.value : wykonawca.value;
+let dataZgl = data_zgl.value ? new Date(data_zgl.value) : new Date();
 
-  if(!ulica || !bud || !dzial || !typ){
-    alert("Uzupełnij pola!");
-    return;
-  }
+let reader = new FileReader();
 
-  lista.push({
-    id:"ZL-"+id++,
-    adres: ulica+" "+bud+"/"+lok,
-    dzial:dzial,
-    typ:typ,
-    wykonawca: document.getElementById("wykonawca").value || "-",
-    status:"Nowe",
-    data:new Date(),
-    reakcja:null,
-    realizacja:null
-  });
+reader.onload = function(){
 
-  zapisz();
-  render();
+let rok = new Date().getFullYear();
+let numer = String(licznik++).padStart(3, '0');
+
+lista.push({
+id: `ZL-${rok}-${numer}`,
+adres:`${ulica.value} ${budynek.value}/${lokal.value}`,
+dzial:dzial.value,
+typ:typ.value,
+wykonawca:wykon,
+opis:opis.value,
+foto: reader.result || "",
+status:"Nowe",
+data_zgl:dataZgl,
+data_przek:"",
+data_koniec:""
+});
+
+save();
+render();
 }
 
-function akcja(i){
-  let t = lista[i];
+if(foto.files[0]){
+reader.readAsDataURL(foto.files[0]);
+}else{
+reader.onload();
+}
 
-  if(t.status==="Nowe"){
-    t.status="W trakcie";
-    t.reakcja = new Date() - new Date(t.data);
-  }else{
-    t.status="Zakończone";
-    t.realizacja = new Date() - (new Date(t.data).getTime()+t.reakcja);
-  }
+}
 
-  zapisz();
-  render();
+function diff(a,b){
+let diffMs = new Date(b) - new Date(a);
+let godziny = Math.floor(diffMs / (1000 * 60 * 60));
+let minuty = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+return godziny + " h " + minuty + " min";
 }
 
 function render(){
 
-  let tb = document.getElementById("tbody");
-  tb.innerHTML="";
+tabela.innerHTML="";
 
-  lista.forEach((t,i)=>{
-    tb.innerHTML += `
-    <tr>
-    <td>${t.id}</td>
-    <td>${t.adres}</td>
-    <td>${t.dzial}</td>
-    <td>${t.typ}</td>
-    <td>${t.wykonawca}</td>
-    <td>${t.status}</td>
-    <td>${new Date(t.data).toLocaleString()}</td>
-    <td>${t.reakcja?czas(t.reakcja):"-"}</td>
-    <td>${t.realizacja?czas(t.realizacja):"-"}</td>
-    <td><button onclick="akcja(${i})">▶</button></td>
-    </tr>`;
-  });
+lista.forEach((z,i)=>{
 
-  raporty();
+let reakcja = z.data_przek ? diff(z.data_zgl,z.data_przek) : "-";
+let realizacja = z.data_koniec ? diff(z.data_przek,z.data_koniec) : "-";
+
+let img = z.foto ? `<img src="${z.foto}" onclick="window.open('${z.foto}')">` : "-";
+
+let akcja="";
+if(z.status==="Nowe") akcja += `<button onclick="start(${i})">▶</button>`;
+if(z.status==="W trakcie") akcja += `<button onclick="done(${i})">✔</button>`;
+akcja += `<button onclick="pdf(${i})">🧾</button>`;
+
+tabela.innerHTML += `
+<tr>
+<td>${z.id}</td>
+<td>${z.adres}</td>
+<td>${z.dzial}</td>
+<td>${z.typ}</td>
+<td>${img}</td>
+<td>${z.wykonawca}</td>
+<td>${z.status}</td>
+<td>${new Date(z.data_zgl).toLocaleString()}</td>
+<td>${z.data_przek ? new Date(z.data_przek).toLocaleString() : "-"}</td>
+<td>${z.data_koniec ? new Date(z.data_koniec).toLocaleString() : "-"}</td>
+<td>${reakcja}</td>
+<td>${realizacja}</td>
+<td>${akcja}</td>
+</tr>
+`;
+});
 }
 
-function raporty(){
-
-  document.getElementById("r_total").innerText = lista.length;
-  document.getElementById("r_new").innerText = lista.filter(x=>x.status==="Nowe").length;
-  document.getElementById("r_prog").innerText = lista.filter(x=>x.status==="W trakcie").length;
-  document.getElementById("r_done").innerText = lista.filter(x=>x.status==="Zakończone").length;
-
-  let issues = {};
-  lista.forEach(x=>issues[x.typ]=(issues[x.typ]||0)+1);
-
-  let ul = document.getElementById("r_issues");
-  ul.innerHTML="";
-  Object.entries(issues).forEach(([k,v])=>{
-    ul.innerHTML+=`<li>${k} - ${v}</li>`;
-  });
-
-  let bud = {};
-  lista.forEach(x=>bud[x.adres]=(bud[x.adres]||0)+1);
-
-  let ul2 = document.getElementById("r_buildings");
-  ul2.innerHTML="";
-  Object.entries(bud).forEach(([k,v])=>{
-    ul2.innerHTML+=`<li>${k} - ${v}</li>`;
-  });
+function start(i){
+lista[i].status="W trakcie";
+lista[i].data_przek = new Date();
+save(); render();
 }
+
+function done(i){
+lista[i].status="Zrealizowane";
+lista[i].data_koniec = new Date();
+save(); render();
+}
+
+function pdf(i){
+let z = lista[i];
+
+let w = window.open("","","width=600,height=700");
+
+w.document.write(`
+<h2>KARTA PRACY WYKONAWCY</h2>
+<hr>
+<b>ID:</b> ${z.id}<br>
+<b>Adres:</b> ${z.adres}<br>
+<b>Dział:</b> ${z.dzial}<br>
+<b>Typ:</b> ${z.typ}<br>
+<b>Opis / kontakt:</b> ${z.opis}<br>
+<b>Wykonawca:</b> ${z.wykonawca}<br>
+<b>Data zgłoszenia:</b> ${new Date(z.data_zgl).toLocaleString()}<br>
+<br><br>
+_________________________<br>
+Podpis wykonawcy
+`);
+
+w.print();
+}
+
+init();
 
 </script>
 
