@@ -34,15 +34,12 @@ z-index:9999;
 
 <body>
 
-<!-- 🔒 LOGOWANIE -->
 <div id="loginBox">
-<div style="background:white;padding:30px;border-radius:10px;text-align:center;box-shadow:0 0 20px rgba(0,0,0,0.2);">
+<div style="background:white;padding:30px;border-radius:10px;text-align:center;">
 <h2>🔐 Panel Administratora</h2>
-<input type="password" id="haslo" placeholder="Wpisz hasło" style="padding:10px;width:200px;">
+<input type="password" id="haslo">
 <br><br>
-<button onclick="login()" style="padding:8px 16px;background:#007bff;color:white;border:none;border-radius:6px;">
-Zaloguj
-</button>
+<button onclick="login()">Zaloguj</button>
 </div>
 </div>
 
@@ -67,43 +64,24 @@ Zaloguj
 <label>Typ zgłoszenia</label>
 <select id="typ"></select>
 
-<label>Opis / kontakt</label>
+<label>Opis</label>
 <textarea id="opis"></textarea>
 
 <label>Wykonawca</label>
-<select id="wykonawca" onchange="toggleInne()">
+<select id="wykonawca">
 <option>Konserwator 1</option>
 <option>Konserwator 2</option>
 <option>Konserwator 3</option>
-<option>Inne</option>
 </select>
-
-<input id="wykonawca_inne" class="hidden" placeholder="Wpisz wykonawcę">
-
-<label>Data zgłoszenia</label>
-<input type="datetime-local" id="data_zgl">
-
-<label>Zdjęcie</label>
-<input type="file" id="foto">
 
 <button class="btn" onclick="dodaj()">Dodaj</button>
 
 <table>
 <thead>
 <tr>
-<th>ID</th>
-<th>Adres</th>
-<th>Dział</th>
-<th>Typ</th>
-<th>Zdjęcie</th>
-<th>Wykonawca</th>
-<th>Status</th>
-<th>Data zgł.</th>
-<th>Przekazanie</th>
-<th>Zakończenie</th>
-<th>Reakcja</th>
-<th>Realizacja</th>
-<th>Akcja</th>
+<th>ID</th><th>Adres</th><th>Dział</th><th>Typ</th>
+<th>Wykonawca</th><th>Status</th>
+<th>Data</th><th>Reakcja</th><th>Realizacja</th><th>Akcja</th>
 </tr>
 </thead>
 <tbody id="tabela"></tbody>
@@ -117,206 +95,146 @@ Zaloguj
 <p>W trakcie: <span id="r_prog">0</span></p>
 <p>Zakończone: <span id="r_done">0</span></p>
 
-<p>Śr. reakcja: <span id="r_react">0</span></p>
-<p>Śr. realizacja: <span id="r_real">0</span></p>
-
-<h3>🔥 Najczęstsze</h3>
-<ul id="r_issues"></ul>
-
-<h3>🏢 Budynki</h3>
-<ul id="r_buildings"></ul>
-
 </div>
 
 <script>
 
 // 🔐 LOGOWANIE
 function login(){
-if(document.getElementById("haslo").value==="admin123"){
-loginBox.style.display="none";
-}else alert("Błędne hasło");
+if(haslo.value==="admin123") loginBox.style.display="none";
+else alert("Błędne hasło");
 }
 
-// baza
-const baza = {
+// 🔥 DANE
+const baza={
 "Góralska":["5","7","9","11"],
-"Leśna Góra":["5","8","23","25"],
+"Leśna Góra":["5","8","23","25","27","29"],
 "Mazowiecka":["3","5","7"],
-"Trawki":["9","11","13"]
+"Trawki":["9","11","13","15","17"]
 };
 
-const katalog = {
-"gazowe":["awaria piecyka","inne - patrz opis"],
-"elektryczne":["zwarcie instalacji","brak prądu","inne - patrz opis"],
-"wodne":["wyciek wody","inne - patrz opis"],
-"porządkowe":["śmieci","inne - patrz opis"]
+const katalog={
+"elektryczne":["zwarcie instalacji","brak prądu"],
+"wodne":["wyciek wody","awaria pionu"],
+"gazowe":["awaria piecyka"],
+"porządkowe":["śmieci","sprzątanie"]
 };
 
-let lista = JSON.parse(localStorage.getItem("FINAL_PRO_MAX")) || [];
-let licznik = lista.length + 1;
-
+// 🔥 INICJALIZACJA (PEWNA)
 function init(){
-ulica.innerHTML = Object.keys(baza).map(u=>`<option>${u}</option>`).join("");
+
+console.log("INIT OK");
+
+ulica.innerHTML="<option>-- wybierz ulicę --</option>";
+Object.keys(baza).forEach(u=>{
+ulica.innerHTML+=`<option>${u}</option>`;
+});
+
+dzial.innerHTML="<option>-- dział --</option>";
+Object.keys(katalog).forEach(d=>{
+dzial.innerHTML+=`<option>${d}</option>`;
+});
+
 budynkiUpdate();
-dzial.innerHTML = Object.keys(katalog).map(d=>`<option>${d}</option>`).join("");
 typyUpdate();
 render();
 }
 
+// 🔥 wymuszenie startu
+setTimeout(init,100);
+
+// 🔥 FUNKCJE
 function budynkiUpdate(){
-budynek.innerHTML = baza[ulica.value].map(b=>`<option>${b}</option>`).join("");
+if(!baza[ulica.value]) return;
+budynek.innerHTML=baza[ulica.value].map(b=>`<option>${b}</option>`).join("");
 }
 
 function typyUpdate(){
-typ.innerHTML = katalog[dzial.value].map(t=>`<option>${t}</option>`).join("");
+if(!katalog[dzial.value]) return;
+typ.innerHTML=katalog[dzial.value].map(t=>`<option>${t}</option>`).join("");
 }
 
-function toggleInne(){
-wykonawca_inne.classList.toggle("hidden", wykonawca.value!=="Inne");
-}
+let lista=JSON.parse(localStorage.getItem("SYS"))||[];
+let id=lista.length+1;
 
 function save(){
-localStorage.setItem("FINAL_PRO_MAX", JSON.stringify(lista));
+localStorage.setItem("SYS",JSON.stringify(lista));
 }
 
 function dodaj(){
 
-let wykon = wykonawca.value==="Inne"?wykonawca_inne.value:wykonawca.value;
-let dataZgl = data_zgl.value ? new Date(data_zgl.value) : new Date();
-
-let reader = new FileReader();
-
-reader.onload = function(){
-
-let rok = new Date().getFullYear();
-let numer = String(licznik++).padStart(3,'0');
+if(!ulica.value||!budynek.value||!dzial.value||!typ.value){
+alert("Uzupełnij pola!");
+return;
+}
 
 lista.push({
-id:`ZL-${rok}-${numer}`,
+id:"ZL-"+id++,
 adres:`${ulica.value} ${budynek.value}/${lokal.value}`,
 dzial:dzial.value,
 typ:typ.value,
-wykonawca:wykon,
-opis:opis.value,
-foto:reader.result||"",
+wykonawca:wykonawca.value,
 status:"Nowe",
-data_zgl:dataZgl,
-data_przek:"",
-data_koniec:""
+data:new Date(),
+reakcja:null,
+realizacja:null
 });
 
 save();
 render();
 }
 
-if(foto.files[0]) reader.readAsDataURL(foto.files[0]);
-else reader.onload();
+function akcja(i){
+let t=lista[i];
+
+if(t.status==="Nowe"){
+t.status="W trakcie";
+t.reakcja=new Date()-new Date(t.data);
+}else{
+t.status="Zakończone";
+t.realizacja=new Date()-(new Date(t.data).getTime()+t.reakcja);
 }
 
-function diff(a,b){
-let d=new Date(b)-new Date(a);
-return Math.floor(d/3600000)+" h "+Math.floor((d%3600000)/60000)+" min";
+save();
+render();
+}
+
+function czas(ms){
+let h=Math.floor(ms/3600000);
+let m=Math.floor((ms%3600000)/60000);
+return h+" h "+m+" min";
 }
 
 function render(){
 
 tabela.innerHTML="";
 
-lista.forEach((z,i)=>{
-
-let reakcja=z.data_przek?diff(z.data_zgl,z.data_przek):"-";
-let realizacja=z.data_koniec?diff(z.data_przek,z.data_koniec):"-";
-
-let img=z.foto?`<img src="${z.foto}" onclick="window.open('${z.foto}')">`:"-";
-
-let akcja="";
-if(z.status==="Nowe") akcja+=`<button onclick="start(${i})">▶</button>`;
-if(z.status==="W trakcie") akcja+=`<button onclick="done(${i})">✔</button>`;
-akcja+=`<button onclick="pdf(${i})">🧾</button>`;
-
+lista.forEach((t,i)=>{
 tabela.innerHTML+=`
 <tr>
-<td>${z.id}</td>
-<td>${z.adres}</td>
-<td>${z.dzial}</td>
-<td>${z.typ}</td>
-<td>${img}</td>
-<td>${z.wykonawca}</td>
-<td>${z.status}</td>
-<td>${new Date(z.data_zgl).toLocaleString()}</td>
-<td>${z.data_przek?new Date(z.data_przek).toLocaleString():"-"}</td>
-<td>${z.data_koniec?new Date(z.data_koniec).toLocaleString():"-"}</td>
-<td>${reakcja}</td>
-<td>${realizacja}</td>
-<td>${akcja}</td>
+<td>${t.id}</td>
+<td>${t.adres}</td>
+<td>${t.dzial}</td>
+<td>${t.typ}</td>
+<td>${t.wykonawca}</td>
+<td>${t.status}</td>
+<td>${new Date(t.data).toLocaleString()}</td>
+<td>${t.reakcja?czas(t.reakcja):"-"}</td>
+<td>${t.realizacja?czas(t.realizacja):"-"}</td>
+<td><button onclick="akcja(${i})">▶</button></td>
 </tr>`;
 });
 
 raporty();
 }
 
-function start(i){
-lista[i].status="W trakcie";
-lista[i].data_przek=new Date();
-save();render();
-}
-
-function done(i){
-lista[i].status="Zrealizowane";
-lista[i].data_koniec=new Date();
-save();render();
-}
-
 // 🔥 RAPORTY
 function raporty(){
-
-let total=lista.length;
-let nowe=lista.filter(x=>x.status==="Nowe").length;
-let prog=lista.filter(x=>x.status==="W trakcie").length;
-let done=lista.filter(x=>x.status==="Zrealizowane").length;
-
-let reakcje=[];
-let realizacje=[];
-
-lista.forEach(z=>{
-if(z.data_przek) reakcje.push(new Date(z.data_przek)-new Date(z.data_zgl));
-if(z.data_koniec && z.data_przek) realizacje.push(new Date(z.data_koniec)-new Date(z.data_przek));
-});
-
-let avg=a=>a.length?(a.reduce((x,y)=>x+y,0)/a.length/3600000).toFixed(1):0;
-
-r_total.innerText=total;
-r_new.innerText=nowe;
-r_prog.innerText=prog;
-r_done.innerText=done;
-r_react.innerText=avg(reakcje)+" h";
-r_real.innerText=avg(realizacje)+" h";
-
-let issues={};
-lista.forEach(z=>issues[z.typ]=(issues[z.typ]||0)+1);
-
-r_issues.innerHTML="";
-Object.entries(issues).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{
-r_issues.innerHTML+=`<li>${k} - ${v}</li>`;
-});
-
-let bud={};
-lista.forEach(z=>bud[z.adres]=(bud[z.adres]||0)+1);
-
-r_buildings.innerHTML="";
-Object.entries(bud).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{
-r_buildings.innerHTML+=`<li>${k} - ${v}</li>`;
-});
+r_total.innerText=lista.length;
+r_new.innerText=lista.filter(x=>x.status==="Nowe").length;
+r_prog.innerText=lista.filter(x=>x.status==="W trakcie").length;
+r_done.innerText=lista.filter(x=>x.status==="Zakończone").length;
 }
-
-function pdf(i){
-let z=lista[i];
-let w=window.open("","","width=600,height=700");
-w.document.write(`<h2>KARTA PRACY</h2>${z.id}<br>${z.adres}`);
-w.print();
-}
-
-init();
 
 </script>
 
