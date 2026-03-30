@@ -16,9 +16,6 @@ button { padding:6px 10px; border:none; border-radius:6px; cursor:pointer; }
 table { width:100%; border-collapse: collapse; margin-top:20px; }
 th, td { border:1px solid #ddd; padding:6px; font-size:13px; }
 
-img { max-width:60px; cursor:pointer; }
-.hidden { display:none; }
-
 #loginBox{
 position:fixed;
 top:0;left:0;
@@ -101,8 +98,9 @@ z-index:9999;
 
 // 🔐 LOGOWANIE
 function login(){
-if(haslo.value==="admin123") loginBox.style.display="none";
-else alert("Błędne hasło");
+if(document.getElementById("haslo").value==="admin123"){
+document.getElementById("loginBox").style.display="none";
+}else alert("Błędne hasło");
 }
 
 // 🔥 DANE
@@ -120,40 +118,56 @@ const katalog={
 "porządkowe":["śmieci","sprzątanie"]
 };
 
-// 🔥 INICJALIZACJA (PEWNA)
-function init(){
+// 🔥 START SYSTEMU (PEWNY)
+document.addEventListener("DOMContentLoaded", function(){
 
-console.log("INIT OK");
-
-ulica.innerHTML="<option>-- wybierz ulicę --</option>";
-Object.keys(baza).forEach(u=>{
-ulica.innerHTML+=`<option>${u}</option>`;
+// ULICE
+const u = document.getElementById("ulica");
+u.innerHTML = `<option value="">-- wybierz ulicę --</option>`;
+Object.keys(baza).forEach(x=>{
+u.innerHTML += `<option value="${x}">${x}</option>`;
 });
 
-dzial.innerHTML="<option>-- dział --</option>";
-Object.keys(katalog).forEach(d=>{
-dzial.innerHTML+=`<option>${d}</option>`;
+// DZIAŁY
+const d = document.getElementById("dzial");
+d.innerHTML = `<option value="">-- dział --</option>`;
+Object.keys(katalog).forEach(x=>{
+d.innerHTML += `<option value="${x}">${x}</option>`;
 });
 
-budynkiUpdate();
-typyUpdate();
 render();
+});
+
+// 🔧 FUNKCJE
+function budynkiUpdate(){
+const b = document.getElementById("budynek");
+
+if(!baza[ulica.value]){
+b.innerHTML = `<option value="">-- wybierz budynek --</option>`;
+return;
 }
 
-// 🔥 wymuszenie startu
-setTimeout(init,100);
-
-// 🔥 FUNKCJE
-function budynkiUpdate(){
-if(!baza[ulica.value]) return;
-budynek.innerHTML=baza[ulica.value].map(b=>`<option>${b}</option>`).join("");
+b.innerHTML = `<option value="">-- wybierz budynek --</option>`;
+baza[ulica.value].forEach(x=>{
+b.innerHTML += `<option value="${x}">${x}</option>`;
+});
 }
 
 function typyUpdate(){
-if(!katalog[dzial.value]) return;
-typ.innerHTML=katalog[dzial.value].map(t=>`<option>${t}</option>`).join("");
+const t = document.getElementById("typ");
+
+if(!katalog[dzial.value]){
+t.innerHTML = `<option value="">-- typ zgłoszenia --</option>`;
+return;
 }
 
+t.innerHTML = `<option value="">-- typ zgłoszenia --</option>`;
+katalog[dzial.value].forEach(x=>{
+t.innerHTML += `<option value="${x}">${x}</option>`;
+});
+}
+
+// 🔥 SYSTEM
 let lista=JSON.parse(localStorage.getItem("SYS"))||[];
 let id=lista.length+1;
 
@@ -228,7 +242,7 @@ tabela.innerHTML+=`
 raporty();
 }
 
-// 🔥 RAPORTY
+// 📊 RAPORTY
 function raporty(){
 r_total.innerText=lista.length;
 r_new.innerText=lista.filter(x=>x.status==="Nowe").length;
