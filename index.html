@@ -18,31 +18,10 @@ th, td { border:1px solid #ddd; padding:6px; font-size:13px; text-align:center; 
 img { max-width:60px; cursor:pointer; }
 
 .hidden { display:none; }
-
-#loginBox{
-position:fixed;
-top:0;left:0;
-width:100%;height:100%;
-background:#f4f6f8;
-display:flex;
-align-items:center;
-justify-content:center;
-z-index:9999;
-}
 </style>
 </head>
 
 <body>
-
-<!-- 🔐 LOGIN -->
-<div id="loginBox">
-<div style="background:white;padding:30px;border-radius:10px;text-align:center;">
-<h2>🔐 Panel Administratora</h2>
-<input type="password" id="haslo" placeholder="Wpisz hasło">
-<br><br>
-<button onclick="login()">Zaloguj</button>
-</div>
-</div>
 
 <div class="container">
 
@@ -110,13 +89,6 @@ z-index:9999;
 
 <script>
 
-// 🔐 LOGIN
-function login(){
-if(document.getElementById("haslo").value.trim()==="admin123"){
-document.getElementById("loginBox").style.display="none";
-}else alert("Błędne hasło");
-}
-
 // 🔥 BAZA
 const baza = {
 "Góralska":["5","7","9","11","37","39","41","43","51","53","55","57","59","61","63","65","67","69","71"],
@@ -125,61 +97,88 @@ const baza = {
 "Trawki":["9","11","13","15","17"]
 };
 
-// 🔥 KATALOG (pełny)
+// 🔥 KATALOG
 const katalog = {
-"gazowe":["awaria piecyka","nieszczelność instalacji gazowej","zapach gazu","brak gazu","inne - patrz opis"],
+"gazowe":["awaria piecyka","nieszczelność instalacji","zapach gazu","inne - patrz opis"],
 "elektryczne":["brak prądu","zwarcie instalacji","awaria oświetlenia","inne - patrz opis"],
 "wodne":["wyciek wody","zalanie lokalu","awaria pionu","inne - patrz opis"],
-"porządkowe":["śmieci","sprzątanie","inne - patrz opis"],
-"inne":["inne - patrz opis"]
+"porządkowe":["śmieci","sprzątanie","inne - patrz opis"]
 };
 
-let lista = JSON.parse(localStorage.getItem("SYS")) || [];
-let id = lista.length + 1;
+let lista = [];
+let id = 1;
 
-// 🔥 START
-window.onload = function(){
+// 🔥 INIT
+window.addEventListener("load", function(){
 
-// ULICE
-ulica.innerHTML = `<option>-- wybierz ulicę --</option>`;
-Object.keys(baza).forEach(x=>ulica.innerHTML+=`<option>${x}</option>`);
+const u = document.getElementById("ulica");
+const d = document.getElementById("dzial");
 
-// DZIAŁY
-dzial.innerHTML = `<option>-- dział --</option>`;
-Object.keys(katalog).forEach(x=>dzial.innerHTML+=`<option>${x}</option>`);
+// ulice
+u.innerHTML = `<option value="">-- wybierz ulicę --</option>`;
+Object.keys(baza).forEach(x=>{
+u.innerHTML += `<option value="${x}">${x}</option>`;
+});
 
-// 🔥 KLUCZOWE — inicjalne ładowanie typów
-typyUpdate();
+// działy
+d.innerHTML = `<option value="">-- dział --</option>`;
+Object.keys(katalog).forEach(x=>{
+d.innerHTML += `<option value="${x}">${x}</option>`;
+});
 
-// EVENTY
-ulica.onchange = budynkiUpdate;
-dzial.onchange = typyUpdate;
+// eventy
+u.addEventListener("change", budynkiUpdate);
+d.addEventListener("change", typyUpdate);
 
-wykonawca.onchange = () =>
-wykonawca_inne.classList.toggle("hidden", wykonawca.value !== "Inne");
+document.getElementById("wykonawca").addEventListener("change", function(){
+document.getElementById("wykonawca_inne").classList.toggle("hidden", this.value !== "Inne");
+});
 
-render();
-};
+});
 
 // 🔧 FUNKCJE
 function budynkiUpdate(){
-budynek.innerHTML = `<option>-- wybierz budynek --</option>`;
-if(!baza[ulica.value]) return;
-baza[ulica.value].forEach(x=>budynek.innerHTML+=`<option>${x}</option>`);
+const u = document.getElementById("ulica").value;
+const b = document.getElementById("budynek");
+
+b.innerHTML = `<option value="">-- wybierz budynek --</option>`;
+if(!baza[u]) return;
+
+baza[u].forEach(x=>{
+b.innerHTML += `<option value="${x}">${x}</option>`;
+});
 }
 
 function typyUpdate(){
-typ.innerHTML = `<option>-- typ zgłoszenia --</option>`;
-if(!katalog[dzial.value]) return;
-katalog[dzial.value].forEach(x=>typ.innerHTML+=`<option>${x}</option>`);
+const d = document.getElementById("dzial").value;
+const t = document.getElementById("typ");
+
+t.innerHTML = `<option value="">-- typ zgłoszenia --</option>`;
+if(!katalog[d]) return;
+
+katalog[d].forEach(x=>{
+t.innerHTML += `<option value="${x}">${x}</option>`;
+});
 }
 
-// 🔥 RESZTA BEZ ZMIAN (działała dobrze)
-
+// 🔥 DODAJ
 function dodaj(){
 
-let wykon = wykonawca.value==="Inne" ? wykonawca_inne.value : wykonawca.value;
-let data = data_zgl.value ? new Date(data_zgl.value) : new Date();
+const ulica = document.getElementById("ulica").value;
+const budynek = document.getElementById("budynek").value;
+const lokal = document.getElementById("lokal").value;
+const dzial = document.getElementById("dzial").value;
+const typ = document.getElementById("typ").value;
+const opis = document.getElementById("opis").value;
+
+const wykonSel = document.getElementById("wykonawca").value;
+const wykonawca = wykonSel==="Inne"
+? document.getElementById("wykonawca_inne").value
+: wykonSel;
+
+const data = document.getElementById("data_zgl").value
+? new Date(document.getElementById("data_zgl").value)
+: new Date();
 
 let reader = new FileReader();
 
@@ -187,49 +186,80 @@ reader.onload = function(){
 
 lista.push({
 id:"ZL-"+id++,
-adres:`${ulica.value} ${budynek.value}/${lokal.value}`,
-dzial:dzial.value,
-typ:typ.value,
-wykonawca:wykon,
+adres:`${ulica} ${budynek}/${lokal}`,
+dzial,
+typ,
+opis,
+wykonawca,
 status:"Nowe",
 data,
 reakcja:null,
 realizacja:null,
-foto: reader.result || "",
-opis: opis.value
+foto: reader.result || ""
 });
 
-localStorage.setItem("SYS", JSON.stringify(lista));
 render();
 };
 
-if(foto.files[0]) reader.readAsDataURL(foto.files[0]);
-else reader.onload();
+if(document.getElementById("foto").files[0]){
+reader.readAsDataURL(document.getElementById("foto").files[0]);
+}else reader.onload();
 }
 
+// 🔥 STATUS
 function akcja(i){
 let t = lista[i];
 
 if(t.status==="Nowe"){
 t.status="W trakcie";
-t.reakcja = new Date() - new Date(t.data);
+t.reakcja=new Date()-new Date(t.data);
 }else{
 t.status="Zakończone";
-t.realizacja = new Date() - (new Date(t.data).getTime()+t.reakcja);
+t.realizacja=new Date()-(new Date(t.data).getTime()+t.reakcja);
 }
 
-localStorage.setItem("SYS", JSON.stringify(lista));
 render();
 }
 
+// 🔥 PDF
+function pdf(i){
+
+let z = lista[i];
+
+let w = window.open("", "", "width=600,height=700");
+
+w.document.write(`
+<h2>KARTA WYKONANIA USŁUGI</h2>
+<hr>
+<b>ID:</b> ${z.id}<br>
+<b>Adres:</b> ${z.adres}<br>
+<b>Dział:</b> ${z.dzial}<br>
+<b>Typ:</b> ${z.typ}<br>
+<b>Opis:</b> ${z.opis}<br>
+<b>Wykonawca:</b> ${z.wykonawca}<br>
+<b>Data zgłoszenia:</b> ${new Date(z.data).toLocaleString()}<br><br>
+
+<b>Uwagi wykonawcy:</b><br>
+<br><br><br>
+
+_________________________<br>
+Podpis wykonawcy
+`);
+
+w.print();
+}
+
+// 🔥 CZAS
 function czas(ms){
 let h=Math.floor(ms/3600000);
 let m=Math.floor((ms%3600000)/60000);
 return h+" h "+m+" min";
 }
 
+// 🔥 RENDER
 function render(){
 
+const tabela = document.getElementById("tabela");
 tabela.innerHTML="";
 
 lista.forEach((t,i)=>{
@@ -258,11 +288,12 @@ tabela.innerHTML+=`
 raporty();
 }
 
+// 🔥 RAPORTY
 function raporty(){
-r_total.innerText=lista.length;
-r_new.innerText=lista.filter(x=>x.status==="Nowe").length;
-r_prog.innerText=lista.filter(x=>x.status==="W trakcie").length;
-r_done.innerText=lista.filter(x=>x.status==="Zakończone").length;
+document.getElementById("r_total").innerText = lista.length;
+document.getElementById("r_new").innerText = lista.filter(x=>x.status==="Nowe").length;
+document.getElementById("r_prog").innerText = lista.filter(x=>x.status==="W trakcie").length;
+document.getElementById("r_done").innerText = lista.filter(x=>x.status==="Zakończone").length;
 }
 
 </script>
