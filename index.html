@@ -15,10 +15,36 @@ button { padding:6px 10px; border:none; border-radius:6px; cursor:pointer; }
 
 table { width:100%; border-collapse: collapse; margin-top:20px; }
 th, td { border:1px solid #ddd; padding:6px; font-size:13px; }
+
+img { max-width:60px; cursor:pointer; }
+.hidden { display:none; }
+
+#loginBox{
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:#f4f6f8;
+display:flex;
+align-items:center;
+justify-content:center;
+z-index:9999;
+}
 </style>
 </head>
 
 <body>
+
+<!-- 🔒 LOGOWANIE -->
+<div id="loginBox">
+<div style="background:white;padding:30px;border-radius:10px;text-align:center;box-shadow:0 0 20px rgba(0,0,0,0.2);">
+<h2>🔐 Panel Administratora</h2>
+<input type="password" id="haslo" placeholder="Wpisz hasło" style="padding:10px;width:200px;">
+<br><br>
+<button onclick="login()" style="padding:8px 16px;background:#007bff;color:white;border:none;border-radius:6px;">
+Zaloguj
+</button>
+</div>
+</div>
 
 <div class="container">
 
@@ -41,81 +67,110 @@ th, td { border:1px solid #ddd; padding:6px; font-size:13px; }
 <label>Typ zgłoszenia</label>
 <select id="typ"></select>
 
-<label>Opis</label>
+<!-- 🔥 PRZENIESIONE -->
+<label>Opis / kontakt</label>
 <textarea id="opis"></textarea>
 
 <label>Wykonawca</label>
-<select id="wykonawca">
+<select id="wykonawca" onchange="toggleInne()">
 <option>Konserwator 1</option>
 <option>Konserwator 2</option>
 <option>Konserwator 3</option>
+<option>Inne</option>
 </select>
+
+<input id="wykonawca_inne" class="hidden" placeholder="Wpisz wykonawcę">
+
+<label>Data zgłoszenia (możesz zmienić)</label>
+<input type="datetime-local" id="data_zgl">
+
+<label>Zdjęcie</label>
+<input type="file" id="foto">
 
 <button class="btn" onclick="dodaj()">Dodaj</button>
 
 <table>
 <thead>
 <tr>
-<th>ID</th><th>Adres</th><th>Dział</th><th>Typ</th>
-<th>Wykonawca</th><th>Status</th><th>Data</th><th>Akcja</th>
+<th>ID</th>
+<th>Adres</th>
+<th>Dział</th>
+<th>Typ</th>
+<th>Zdjęcie</th>
+<th>Wykonawca</th>
+<th>Status</th>
+<th>Data zgł.</th>
+<th>Przekazanie wykonawcy</th>
+<th>Zakończenie</th>
+<th>Reakcja</th>
+<th>Realizacja</th>
+<th>Akcja</th>
 </tr>
 </thead>
+
 <tbody id="tabela"></tbody>
+
 </table>
 
 </div>
 
 <script>
 
-// 🔥 PEŁNA BAZA
+// 🔐 LOGOWANIE
+function login(){
+const pass = document.getElementById("haslo").value;
+if(pass === "admin123"){
+document.getElementById("loginBox").style.display="none";
+}else{
+alert("Błędne hasło");
+}
+}
+
+// baza ulic
 const baza = {
-"Góralska":["5","7","9","11","37","39","41","43","51","53","55","57","59","61","63","65","67","69","71"],
-"Leśna Góra":["5","8","23","25","27","29"],
-"Mazowiecka":["3","5","7"],
-"Trawki":["9","11","13","15","17"],
-"Reymonta":["17","34"],
-"Słowackiego":["36A","40A","47/49/51","59","61"],
-"Róży Ostrowskiej":["2","4"],
-"Leśny Stok":["4"],
-"Partyzantów":["91/93","95/97","99","101","103","105","107","109","27"],
-"Wojska Polskiego":["7"],
-"Batorego":["33","34","35","37","39"],
-"De Gaulle’a":["8"],
-"Zamenhofa":["18"],
-"Grunwaldzka":["92/98","116","121"],
-"Biała":["3","6"],
-"Chrobrego":["10","12","14","18/20"],
-"Danusi":["4A"],
-"Lelewela":["17","17A","21/22"],
-"Lilli Wenedy":["18A","B","D","E","F"],
-"Mickiewicza":["1/3","18"],
-"Wyspiańskiego":["25","38/40"]
+"Góralska": ["5","7","9","11","37","39","41","43","51","53","55","57","59","61","63","65","67","69","71"],
+"Leśna Góra": ["5","8","23","25","27","29"],
+"Mazowiecka": ["3","5","7"],
+"Trawki": ["9","11","13","15","17"],
+"Reymonta": ["17","34"],
+"Słowackiego": ["36A","40A","47/49/51","59","61"],
+"Róży Ostrowskiej": ["2","4"],
+"Leśny Stok": ["4"],
+"Partyzantów": ["91/93","95/97","99","101","103","105","107","109","27"],
+"Wojska Polskiego": ["7"],
+"Batorego": ["33","34","35","37","39"],
+"De Gaulle’a": ["8"],
+"Zamenhofa": ["18"],
+"Grunwaldzka": ["92/98","116","121"],
+"Biała": ["3","6"],
+"Chrobrego": ["10","12","14","18/20"],
+"Danusi": ["4A"],
+"Lelewela": ["17","17A","21/22"],
+"Lilli Wenedy": ["18A","B","D","E","F"],
+"Mickiewicza": ["1/3","18"],
+"Wyspiańskiego": ["25","38/40"]
 };
 
-// 🔥 PEŁNY KATALOG
+// katalog
 const katalog = {
-"gazowe":["awaria piecyka","nieszczelność instalacji gazowej","zapach gazu","brak gazu","inne - patrz opis"],
-"elektryczne":["brak prądu w lokalu","brak prądu w budynku","zwarcie instalacji","awaria oświetlenia","inne - patrz opis"],
-"wodne":["wyciek wody","zalanie lokalu","awaria pionu","problem z kanalizacją","inne - patrz opis"],
-"porządkowe":["sprzątanie klatki","śmieci","śnieg / oblodzenie","inne - patrz opis"],
-"inne":["inne - patrz opis"]
+"gazowe": ["awaria piecyka","nieszczelność instalacji gazowej","zapach gazu","brak gazu","przegląd instalacji gazowej","nieszczelny zawór gazowy","problem z wentylacją","brak ciągu kominowego","czujnik gazu – alarm","inne - patrz opis"],
+"elektryczne": ["brak prądu w lokalu","brak prądu w budynku","zwarcie instalacji","awaria oświetlenia klatki","uszkodzone gniazdko","awaria licznika energii","problem z instalacją elektryczną","awaria domofonu","bezpieczniki / rozdzielnia","inne - patrz opis"],
+"wodne": ["wyciek wody","zalanie lokalu","awaria pionu wodnego","problem z kanalizacją","zatkany odpływ","niskie ciśnienie wody","awaria licznika wody","nieszczelny zawór","cofka kanalizacji","inne - patrz opis"],
+"porządkowe": ["sprzątanie klatki schodowej","zalegające śmieci","odpady wielkogabarytowe","brak porządku wokół budynku","liście / zanieczyszczenia","śnieg / oblodzenie","piasek po zimie","zanieczyszczone miejsca wspólne","dezynfekcja powierzchni","inne - patrz opis"],
+"inne": ["inne - patrz opis"]
 };
 
-let lista = [];
-let licznik = 1;
+let lista = JSON.parse(localStorage.getItem("FINAL_PRO_MAX")) || [];
+let licznik = lista.length + 1;
 
-// INIT
-window.onload = function(){
-
+function init(){
 ulica.innerHTML = Object.keys(baza).map(u=>`<option>${u}</option>`).join("");
 budynkiUpdate();
-
 dzial.innerHTML = Object.keys(katalog).map(d=>`<option>${d}</option>`).join("");
 typyUpdate();
+render();
+}
 
-};
-
-// FUNKCJE
 function budynkiUpdate(){
 budynek.innerHTML = baza[ulica.value].map(b=>`<option>${b}</option>`).join("");
 }
@@ -124,44 +179,131 @@ function typyUpdate(){
 typ.innerHTML = katalog[dzial.value].map(t=>`<option>${t}</option>`).join("");
 }
 
+function toggleInne(){
+wykonawca_inne.classList.toggle("hidden", wykonawca.value !== "Inne");
+}
+
+function save(){
+localStorage.setItem("FINAL_PRO_MAX", JSON.stringify(lista));
+}
+
 function dodaj(){
 
+let wykon = wykonawca.value === "Inne" ? wykonawca_inne.value : wykonawca.value;
+let dataZgl = data_zgl.value ? new Date(data_zgl.value) : new Date();
+
+let reader = new FileReader();
+
+reader.onload = function(){
+
+let rok = new Date().getFullYear();
+let numer = String(licznik++).padStart(3, '0');
+
 lista.push({
-id:"ZL-"+(licznik++),
+id: `ZL-${rok}-${numer}`,
 adres:`${ulica.value} ${budynek.value}/${lokal.value}`,
 dzial:dzial.value,
 typ:typ.value,
-wykonawca:wykonawca.value,
+wykonawca:wykon,
+opis:opis.value,
+foto: reader.result || "",
 status:"Nowe",
-data:new Date()
+data_zgl:dataZgl,
+data_przek:"",
+data_koniec:""
 });
 
+save();
 render();
 }
 
-function akcja(i){
-lista[i].status="Zrealizowane";
-render();
+if(foto.files[0]){
+reader.readAsDataURL(foto.files[0]);
+}else{
+reader.onload();
+}
+
+}
+
+function diff(a,b){
+let diffMs = new Date(b) - new Date(a);
+let godziny = Math.floor(diffMs / (1000 * 60 * 60));
+let minuty = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+return godziny + " h " + minuty + " min";
 }
 
 function render(){
 
 tabela.innerHTML="";
 
-lista.forEach((t,i)=>{
-tabela.innerHTML+=`
+lista.forEach((z,i)=>{
+
+let reakcja = z.data_przek ? diff(z.data_zgl,z.data_przek) : "-";
+let realizacja = z.data_koniec ? diff(z.data_przek,z.data_koniec) : "-";
+
+let img = z.foto ? `<img src="${z.foto}" onclick="window.open('${z.foto}')">` : "-";
+
+let akcja="";
+if(z.status==="Nowe") akcja += `<button onclick="start(${i})">▶</button>`;
+if(z.status==="W trakcie") akcja += `<button onclick="done(${i})">✔</button>`;
+akcja += `<button onclick="pdf(${i})">🧾</button>`;
+
+tabela.innerHTML += `
 <tr>
-<td>${t.id}</td>
-<td>${t.adres}</td>
-<td>${t.dzial}</td>
-<td>${t.typ}</td>
-<td>${t.wykonawca}</td>
-<td>${t.status}</td>
-<td>${new Date(t.data).toLocaleString()}</td>
-<td><button onclick="akcja(${i})">✔</button></td>
-</tr>`;
+<td>${z.id}</td>
+<td>${z.adres}</td>
+<td>${z.dzial}</td>
+<td>${z.typ}</td>
+<td>${img}</td>
+<td>${z.wykonawca}</td>
+<td>${z.status}</td>
+<td>${new Date(z.data_zgl).toLocaleString()}</td>
+<td>${z.data_przek ? new Date(z.data_przek).toLocaleString() : "-"}</td>
+<td>${z.data_koniec ? new Date(z.data_koniec).toLocaleString() : "-"}</td>
+<td>${reakcja}</td>
+<td>${realizacja}</td>
+<td>${akcja}</td>
+</tr>
+`;
 });
 }
+
+function start(i){
+lista[i].status="W trakcie";
+lista[i].data_przek = new Date();
+save(); render();
+}
+
+function done(i){
+lista[i].status="Zrealizowane";
+lista[i].data_koniec = new Date();
+save(); render();
+}
+
+function pdf(i){
+let z = lista[i];
+
+let w = window.open("","","width=600,height=700");
+
+w.document.write(`
+<h2>KARTA PRACY WYKONAWCY</h2>
+<hr>
+<b>ID:</b> ${z.id}<br>
+<b>Adres:</b> ${z.adres}<br>
+<b>Dział:</b> ${z.dzial}<br>
+<b>Typ:</b> ${z.typ}<br>
+<b>Opis / kontakt:</b> ${z.opis}<br>
+<b>Wykonawca:</b> ${z.wykonawca}<br>
+<b>Data zgłoszenia:</b> ${new Date(z.data_zgl).toLocaleString()}<br>
+<br><br>
+_________________________<br>
+Podpis wykonawcy
+`);
+
+w.print();
+}
+
+init();
 
 </script>
 
