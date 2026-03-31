@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>SYSTEM ADMINISTRATORA FINAL PRO MAX+</title>
+<title>System Administratora FINAL PRO MAX+</title>
 
 <style>
 body { font-family: Arial; background:#f4f6f8; padding:20px; }
@@ -14,7 +14,7 @@ button { padding:6px 10px; border:none; border-radius:6px; cursor:pointer; }
 .btn { background:#007bff; color:white; }
 
 table { width:100%; border-collapse: collapse; margin-top:20px; }
-th, td { border:1px solid #ddd; padding:6px; font-size:13px; text-align:center; }
+th, td { border:1px solid #ddd; padding:6px; font-size:13px; }
 
 img { max-width:60px; cursor:pointer; }
 .hidden { display:none; }
@@ -34,7 +34,6 @@ z-index:9999;
 
 <body>
 
-<!-- LOGIN -->
 <div id="loginBox">
 <div style="background:white;padding:30px;border-radius:10px;text-align:center;">
 <h2>🔐 Panel Administratora</h2>
@@ -65,7 +64,7 @@ z-index:9999;
 <label>Typ zgłoszenia</label>
 <select id="typ"></select>
 
-<label>Opis</label>
+<label>Opis / kontakt</label>
 <textarea id="opis"></textarea>
 
 <label>Wykonawca</label>
@@ -91,14 +90,13 @@ z-index:9999;
 <tr>
 <th>ID</th><th>Adres</th><th>Dział</th><th>Typ</th>
 <th>Zdjęcie</th><th>Wykonawca</th><th>Status</th>
-<th>Data zgł.</th><th>Przekazanie</th><th>Zakończenie</th>
-<th>Reakcja</th><th>Realizacja</th><th>Akcja</th>
+<th>Data</th><th>Reakcja</th><th>Realizacja</th><th>Akcja</th>
 </tr>
 </thead>
 <tbody id="tabela"></tbody>
 </table>
 
-<h2>🔥 Najczęstsze zgłoszenia (TOP 10)</h2>
+<h2>🔥 Najczęstsze zgłoszenia</h2>
 <ul id="top10"></ul>
 
 </div>
@@ -113,7 +111,7 @@ document.getElementById("loginBox").style.display="none";
 }
 
 // BAZA
-const baza = {
+const baza={
 "Góralska":["5","7","9","11","37","39","41","43","51","53","55","57","59","61","63","65","67","69","71"],
 "Leśna Góra":["5","8","23","25","27","29"],
 "Mazowiecka":["3","5","7"],
@@ -137,213 +135,95 @@ const baza = {
 "Wyspiańskiego":["25","38/40"]
 };
 
-// KATALOG
-const katalog = {
-"gazowe": [
-"awaria piecyka",
-"nieszczelność instalacji gazowej",
-"zapach gazu",
-"brak gazu",
-"przegląd instalacji gazowej",
-"nieszczelny zawór gazowy",
-"problem z wentylacją",
-"brak ciągu kominowego",
-"czujnik gazu – alarm",
-"inne - patrz opis"
-],
-
-"elektryczne": [
-"brak prądu w lokalu",
-"brak prądu w budynku",
-"zwarcie instalacji",
-"awaria oświetlenia klatki",
-"uszkodzone gniazdko",
-"awaria licznika energii",
-"problem z instalacją elektryczną",
-"awaria domofonu",
-"bezpieczniki / rozdzielnia",
-"inne - patrz opis"
-],
-
-"wodne": [
-"wyciek wody",
-"zalanie lokalu",
-"awaria pionu wodnego",
-"problem z kanalizacją",
-"zatkany odpływ",
-"niskie ciśnienie wody",
-"awaria licznika wody",
-"nieszczelny zawór",
-"cofka kanalizacji",
-"inne - patrz opis"
-],
-
-"porządkowe": [
-"sprzątanie klatki schodowej",
-"zalegające śmieci",
-"odpady wielkogabarytowe",
-"brak porządku wokół budynku",
-"liście / zanieczyszczenia",
-"śnieg / oblodzenie",
-"piasek po zimie",
-"zanieczyszczone miejsca wspólne",
-"dezynfekcja powierzchni",
-"inne - patrz opis"
-],
-
-"inne": [
-"inne - patrz opis"
-]
+const katalog={
+"gazowe":["awaria piecyka","nieszczelność instalacji gazowej","zapach gazu","brak gazu","przegląd instalacji gazowej","nieszczelny zawór gazowy","problem z wentylacją","brak ciągu kominowego","czujnik gazu – alarm","inne - patrz opis"],
+"elektryczne":["brak prądu w lokalu","brak prądu w budynku","zwarcie instalacji","awaria oświetlenia klatki","uszkodzone gniazdko","awaria licznika energii","problem z instalacją elektryczną","awaria domofonu","bezpieczniki / rozdzielnia","inne - patrz opis"],
+"wodne":["wyciek wody","zalanie lokalu","awaria pionu wodnego","problem z kanalizacją","zatkany odpływ","niskie ciśnienie wody","awaria licznika wody","nieszczelny zawór","cofka kanalizacji","inne - patrz opis"],
+"porządkowe":["sprzątanie klatki","śmieci","odpady","brak porządku","liście","śnieg","piasek","zanieczyszczenia","dezynfekcja","inne - patrz opis"]
 };
 
-let lista = JSON.parse(localStorage.getItem("SYS")) || [];
-let licznik = lista.length + 1;
+let lista=JSON.parse(localStorage.getItem("SYS"))||[];
+let id=lista.length+1;
 
+// INIT
 function init(){
 
-document.getElementById("ulica").innerHTML =
-Object.keys(baza).map(u=>`<option>${u}</option>`).join("");
+let u=document.getElementById("ulica");
+let d=document.getElementById("dzial");
 
-document.getElementById("dzial").innerHTML =
-Object.keys(katalog).map(d=>`<option>${d}</option>`).join("");
+u.innerHTML=Object.keys(baza).map(x=>`<option>${x}</option>`).join("");
+d.innerHTML=Object.keys(katalog).map(x=>`<option>${x}</option>`).join("");
 
-// 🔥 wymuszenie reakcji na zmianę
-document.getElementById("dzial").addEventListener("change", typyUpdate);
-document.getElementById("ulica").addEventListener("change", budynkiUpdate);
+u.addEventListener("change",budynkiUpdate);
+d.addEventListener("change",typyUpdate);
 
 budynkiUpdate();
 typyUpdate();
 render();
 }
 
+// FUNKCJE
 function budynkiUpdate(){
-budynek.innerHTML = baza[ulica.value].map(b=>`<option>${b}</option>`).join("");
+let u=document.getElementById("ulica").value;
+let b=document.getElementById("budynek");
+b.innerHTML=baza[u].map(x=>`<option>${x}</option>`).join("");
 }
 
 function typyUpdate(){
-
-let dzialVal = document.getElementById("dzial").value;
-let typSelect = document.getElementById("typ");
-
-// 🔥 czyścimy stare opcje
-typSelect.innerHTML = "";
-
-if(!katalog[dzialVal]) return;
-
-katalog[dzialVal].forEach(t=>{
-typSelect.innerHTML += `<option>${t}</option>`;
-});
-
-}
-
-let dzialSelect = document.getElementById("dzial");
-let typSelect = document.getElementById("typ");
-
-let wybrany = dzialSelect.value;
-
-if(!katalog[wybrany]) return;
-
-typSelect.innerHTML = katalog[wybrany]
-.map(t=>`<option>${t}</option>`)
-.join("");
+let d=document.getElementById("dzial").value;
+let t=document.getElementById("typ");
+t.innerHTML=katalog[d].map(x=>`<option>${x}</option>`).join("");
 }
 
 function toggleInne(){
-wykonawca_inne.classList.toggle("hidden", wykonawca.value!=="Inne");
+let w=document.getElementById("wykonawca").value;
+document.getElementById("wykonawca_inne").classList.toggle("hidden",w!=="Inne");
 }
 
 function save(){
-localStorage.setItem("SYS", JSON.stringify(lista));
+localStorage.setItem("SYS",JSON.stringify(lista));
 }
 
 function dodaj(){
 
-let wykon = wykonawca.value==="Inne" ? wykonawca_inne.value : wykonawca.value;
-let data = data_zgl.value ? new Date(data_zgl.value) : new Date();
+let wykon=document.getElementById("wykonawca").value==="Inne"
+?document.getElementById("wykonawca_inne").value
+:document.getElementById("wykonawca").value;
 
-let reader = new FileReader();
-
-reader.onload = function(){
+let data=new Date();
 
 lista.push({
-id:"ZL-"+(licznik++),
-adres:`${document.getElementById("ulica").value} ${document.getElementById("budynek").value}/${document.getElementById("lokal").value}`,
-dzial: document.getElementById("dzial").value,
-typ: document.getElementById("typ").value,
-wykonawca: wykon,
-opis: document.getElementById("opis").value,
-foto:reader.result || "",
+id:"ZL-"+id++,
+adres:`${ulica.value} ${budynek.value}/${lokal.value}`,
+dzial:dzial.value,
+typ:typ.value,
+wykonawca:wykon,
 status:"Nowe",
-data_zgl:data,
-data_przek:"",
-data_koniec:""
+data:data,
+przek:null,
+koniec:null
 });
 
 save();
 render();
-};
-
-if(foto.files[0]) reader.readAsDataURL(foto.files[0]);
-else reader.onload();
-}
-
-function diff(a,b){
-let ms = new Date(b)-new Date(a);
-let h=Math.floor(ms/3600000);
-let m=Math.floor((ms%3600000)/60000);
-return h+" h "+m+" min";
 }
 
 function start(i){
 lista[i].status="W trakcie";
-lista[i].data_przek=new Date();
+lista[i].przek=new Date();
 save(); render();
 }
 
 function done(i){
 lista[i].status="Zrealizowane";
-lista[i].data_koniec=new Date();
+lista[i].koniec=new Date();
 save(); render();
 }
 
-function pdf(i){
-let z=lista[i];
-
-let w=window.open("","","width=600,height=700");
-
-w.document.write(`
-<h2>KARTA PRACY</h2>
-<hr>
-<b>ID:</b> ${z.id}<br>
-<b>Adres:</b> ${z.adres}<br>
-<b>Dział:</b> ${z.dzial}<br>
-<b>Typ:</b> ${z.typ}<br>
-<b>Opis:</b> ${z.opis}<br>
-<b>Wykonawca:</b> ${z.wykonawca}<br>
-<br><br>
-<b>Uwagi:</b><br><br><br>
-____________________
-`);
-
-w.print();
-}
-
-function generujTop10(){
-let stat={};
-
-lista.forEach(z=>{
-if(!stat[z.typ]) stat[z.typ]=0;
-stat[z.typ]++;
-});
-
-let wynik=Object.entries(stat).sort((a,b)=>b[1]-a[1]).slice(0,10);
-
-let ul=document.getElementById("top10");
-ul.innerHTML="";
-
-wynik.forEach(([t,l])=>{
-ul.innerHTML+=`<li>${t} — ${l}</li>`;
-});
+function czas(ms){
+let h=Math.floor(ms/3600000);
+let m=Math.floor((ms%3600000)/60000);
+return h+" h "+m+" min";
 }
 
 function render(){
@@ -352,15 +232,8 @@ tabela.innerHTML="";
 
 lista.forEach((z,i)=>{
 
-let reakcja = z.data_przek ? diff(z.data_zgl,z.data_przek) : "-";
-let realizacja = z.data_koniec ? diff(z.data_przek,z.data_koniec) : "-";
-
-let img = z.foto ? `<img src="${z.foto}" onclick="window.open('${z.foto}')">` : "-";
-
-let akcja="";
-if(z.status==="Nowe") akcja += `<button onclick="start(${i})">▶</button>`;
-if(z.status==="W trakcie") akcja += `<button onclick="done(${i})">✔</button>`;
-akcja += `<button onclick="pdf(${i})">🧾</button>`;
+let r=z.przek?czas(z.przek-z.data):"-";
+let re=z.koniec?czas(z.koniec-z.przek):"-";
 
 tabela.innerHTML+=`
 <tr>
@@ -368,20 +241,56 @@ tabela.innerHTML+=`
 <td>${z.adres}</td>
 <td>${z.dzial}</td>
 <td>${z.typ}</td>
-<td>${img}</td>
+<td>-</td>
 <td>${z.wykonawca}</td>
 <td>${z.status}</td>
-<td>${new Date(z.data_zgl).toLocaleString()}</td>
-<td>${z.data_przek?new Date(z.data_przek).toLocaleString():"-"}</td>
-<td>${z.data_koniec?new Date(z.data_koniec).toLocaleString():"-"}</td>
-<td>${reakcja}</td>
-<td>${realizacja}</td>
-<td>${akcja}</td>
+<td>${z.data.toLocaleString()}</td>
+<td>${r}</td>
+<td>${re}</td>
+<td>
+<button onclick="start(${i})">▶</button>
+<button onclick="done(${i})">✔</button>
+<button onclick="pdf(${i})">🧾</button>
+</td>
 </tr>`;
 });
 
-generujTop10();
+top10();
 }
+
+function top10(){
+let stat={};
+lista.forEach(z=>{
+stat[z.typ]=(stat[z.typ]||0)+1;
+});
+let wynik=Object.entries(stat).sort((a,b)=>b[1]-a[1]).slice(0,10);
+
+top10.innerHTML="";
+wynik.forEach(x=>{
+top10.innerHTML+=`<li>${x[0]} (${x[1]})</li>`;
+});
+}
+
+function pdf(i){
+let z=lista[i];
+let w=window.open("");
+
+w.document.write(`
+<h2>KARTA PRACY</h2>
+<b>ID:</b> ${z.id}<br>
+<b>Adres:</b> ${z.adres}<br>
+<b>Dział:</b> ${z.dzial}<br>
+<b>Typ:</b> ${z.typ}<br>
+<b>Wykonawca:</b> ${z.wykonawca}<br>
+<br><br>
+<b>Uwagi:</b><br><br><br><br>
+______________________
+`);
+
+w.print();
+}
+
+init();
 
 </script>
 
