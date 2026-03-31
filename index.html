@@ -215,7 +215,17 @@ budynek.innerHTML = baza[ulica.value].map(b=>`<option>${b}</option>`).join("");
 }
 
 function typyUpdate(){
-typ.innerHTML = katalog[dzial.value].map(t=>`<option>${t}</option>`).join("");
+
+let dzialSelect = document.getElementById("dzial");
+let typSelect = document.getElementById("typ");
+
+let wybrany = dzialSelect.value;
+
+if(!katalog[wybrany]) return;
+
+typSelect.innerHTML = katalog[wybrany]
+.map(t=>`<option>${t}</option>`)
+.join("");
 }
 
 function toggleInne(){
