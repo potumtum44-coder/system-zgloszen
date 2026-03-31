@@ -199,22 +199,42 @@ const katalog = {
 let lista = JSON.parse(localStorage.getItem("SYS")) || [];
 let licznik = lista.length + 1;
 
-// INIT
-window.onload = function(){
-ulica.innerHTML = Object.keys(baza).map(u=>`<option>${u}</option>`).join("");
+function init(){
+
+document.getElementById("ulica").innerHTML =
+Object.keys(baza).map(u=>`<option>${u}</option>`).join("");
+
+document.getElementById("dzial").innerHTML =
+Object.keys(katalog).map(d=>`<option>${d}</option>`).join("");
+
+// 🔥 wymuszenie reakcji na zmianę
+document.getElementById("dzial").addEventListener("change", typyUpdate);
+document.getElementById("ulica").addEventListener("change", budynkiUpdate);
+
 budynkiUpdate();
-
-dzial.innerHTML = Object.keys(katalog).map(d=>`<option>${d}</option>`).join("");
 typyUpdate();
-
 render();
-};
+}
 
 function budynkiUpdate(){
 budynek.innerHTML = baza[ulica.value].map(b=>`<option>${b}</option>`).join("");
 }
 
 function typyUpdate(){
+
+let dzialVal = document.getElementById("dzial").value;
+let typSelect = document.getElementById("typ");
+
+// 🔥 czyścimy stare opcje
+typSelect.innerHTML = "";
+
+if(!katalog[dzialVal]) return;
+
+katalog[dzialVal].forEach(t=>{
+typSelect.innerHTML += `<option>${t}</option>`;
+});
+
+}
 
 let dzialSelect = document.getElementById("dzial");
 let typSelect = document.getElementById("typ");
