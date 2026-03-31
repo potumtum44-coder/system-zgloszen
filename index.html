@@ -89,12 +89,30 @@ Zaloguj
 
 <button class="btn" onclick="dodaj()">Dodaj</button>
 
-<table></table>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Adres</th>
+<th>Dział</th>
+<th>Typ</th>
+<th>Zdjęcie</th>
+<th>Wykonawca</th>
+<th>Status</th>
+<th>Data zgł.</th>
+<th>Przekazanie wykonawcy</th>
+<th>Zakończenie</th>
+<th>Reakcja</th>
+<th>Realizacja</th>
+<th>Akcja</th>
+</tr>
+</thead>
+
+<tbody id="tabela"></tbody>
+</table>
 
 <h2>🔥 Najczęstsze zgłoszenia (TOP 10)</h2>
 <ul id="top10"></ul>
-
-</div>
 <thead>
 <tr>
 <th>ID</th>
@@ -278,14 +296,18 @@ function start(i){
 lista[i].status="W trakcie";
 lista[i].data_przek = new Date();
 save(); render();
-}function done(i){
+function done(i){
 lista[i].status="Zrealizowane";
 lista[i].data_koniec = new Date();
-save(); render();function generujTop10(){
+save(); 
+render();
+}
+
+// TOP 10
+function generujTop10(){
 
 let stat = {};
 
-// zliczanie typów zgłoszeń
 lista.forEach(z=>{
 let klucz = z.typ;
 
@@ -293,12 +315,10 @@ if(!stat[klucz]) stat[klucz] = 0;
 stat[klucz]++;
 });
 
-// sortowanie malejąco
 let wynik = Object.entries(stat)
 .sort((a,b)=>b[1]-a[1])
 .slice(0,10);
 
-// render
 let ul = document.getElementById("top10");
 ul.innerHTML = "";
 
