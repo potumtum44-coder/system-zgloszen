@@ -247,11 +247,11 @@ reader.onload = function(){
 
 lista.push({
 id:"ZL-"+(licznik++),
-adres:`${ulica.value} ${budynek.value}/${lokal.value}`,
-dzial:dzial.value,
-typ:typ.value,
-wykonawca:wykon,
-opis:opis.value,
+adres:`${document.getElementById("ulica").value} ${document.getElementById("budynek").value}/${document.getElementById("lokal").value}`,
+dzial: document.getElementById("dzial").value,
+typ: document.getElementById("typ").value,
+wykonawca: wykon,
+opis: document.getElementById("opis").value,
 foto:reader.result || "",
 status:"Nowe",
 data_zgl:data,
