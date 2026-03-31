@@ -288,6 +288,7 @@ let w = window.open("","","width=600,height=700");
 w.document.write(`
 <h2>KARTA PRACY WYKONAWCY</h2>
 <hr>
+
 <b>ID:</b> ${z.id}<br>
 <b>Adres:</b> ${z.adres}<br>
 <b>Dział:</b> ${z.dzial}<br>
@@ -295,7 +296,12 @@ w.document.write(`
 <b>Opis / kontakt:</b> ${z.opis}<br>
 <b>Wykonawca:</b> ${z.wykonawca}<br>
 <b>Data zgłoszenia:</b> ${new Date(z.data_zgl).toLocaleString()}<br>
+
 <br><br>
+
+<b>Uwagi wykonawcy:</b>
+<br><br><br><br><br>
+
 _________________________<br>
 Podpis wykonawcy
 `);
